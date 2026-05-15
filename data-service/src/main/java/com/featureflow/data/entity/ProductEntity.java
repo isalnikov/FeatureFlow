@@ -1,5 +1,6 @@
 package com.featureflow.data.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import java.time.Instant;
 import java.util.HashSet;
@@ -26,9 +27,11 @@ public class ProductEntity {
     private Set<String> technologyStack = new HashSet<>();
 
     @ManyToMany(mappedBy = "products")
+    @JsonIgnore
     private Set<TeamEntity> teams = new HashSet<>();
 
     @ManyToMany(mappedBy = "products")
+    @JsonIgnore
     private Set<FeatureEntity> features = new HashSet<>();
 
     @Version

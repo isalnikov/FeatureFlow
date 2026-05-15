@@ -1,5 +1,6 @@
 package com.featureflow.data.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import java.time.Instant;
 import java.util.*;
@@ -41,6 +42,7 @@ public class TeamEntity {
         joinColumns = @JoinColumn(name = "team_id"),
         inverseJoinColumns = @JoinColumn(name = "product_id")
     )
+    @JsonIgnore
     private Set<ProductEntity> products = new HashSet<>();
 
     @Column(name = "external_id")

@@ -1,5 +1,6 @@
 package com.featureflow.data.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.featureflow.domain.valueobject.ClassOfService;
 import org.hibernate.annotations.JdbcTypeCode;
 import jakarta.persistence.*;
@@ -41,6 +42,7 @@ public class FeatureEntity {
         joinColumns = @JoinColumn(name = "feature_id"),
         inverseJoinColumns = @JoinColumn(name = "product_id")
     )
+    @JsonIgnore
     private Set<ProductEntity> products = new HashSet<>();
 
     @JdbcTypeCode(SqlTypes.JSON)
@@ -57,6 +59,7 @@ public class FeatureEntity {
         joinColumns = @JoinColumn(name = "feature_id"),
         inverseJoinColumns = @JoinColumn(name = "depends_on_id")
     )
+    @JsonIgnore
     private Set<FeatureEntity> dependencies = new HashSet<>();
 
     @ElementCollection
