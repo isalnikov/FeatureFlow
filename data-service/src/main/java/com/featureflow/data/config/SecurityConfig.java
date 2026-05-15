@@ -1,5 +1,9 @@
 package com.featureflow.data.config;
 
+import com.nimbusds.jose.JWSAlgorithm;
+import com.nimbusds.jose.jwk.source.ImmutableSecret;
+import com.nimbusds.jose.proc.SecurityContext;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.Customizer;
@@ -7,12 +11,20 @@ import org.springframework.security.config.annotation.method.configuration.Enabl
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.oauth2.jwt.JwtDecoder;
+import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
 import org.springframework.security.web.SecurityFilterChain;
+
+import javax.crypto.spec.SecretKeySpec;
+import java.nio.charset.StandardCharsets;
 
 @Configuration
 @EnableWebSecurity
 @EnableMethodSecurity
 public class SecurityConfig {
+
+    @Value("${featureflow.security.jwt.secret:featureflow-default-secret-key-must-be-32-chars}")
+    private String jwtSecret;
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
@@ -27,11 +39,20 @@ public class SecurityConfig {
                 .requestMatchers("/api/v1/features/**").hasAnyRole("ADMIN", "DELIVERY_MANAGER", "PRODUCT_OWNER")
                 .requestMatchers("/api/v1/assignments/**").hasAnyRole("ADMIN", "DELIVERY_MANAGER")
                 .requestMatchers("/api/v1/planning-windows/**").hasAnyRole("ADMIN", "DELIVERY_MANAGER")
+                .requestMatchers("/api/v1/sprints/**").hasAnyRole("ADMIN", "DELIVERY_MANAGER")
                 .requestMatchers("/api/v1/dashboard/**").hasAnyRole("ADMIN", "DELIVERY_MANAGER", "PRODUCT_OWNER", "TEAM_LEAD")
                 .requestMatchers("/api/v1/**").authenticated()
                 .anyRequest().authenticated()
             )
             .oauth2ResourceServer(oauth2 -> oauth2.jwt(Customizer.withDefaults()))
             .build();
+    }
+
+    @Bean
+    public JwtDecoder jwtDecoder() {
+        byte[] keyBytes = jwtSecret.getBytes(StandardCharsets.UTF_8);
+        var secretKey = new SecretKeySpec(keyBytes, 0, keyBytes.length, JWSAlgorithm.HS256.getName());
+        var jwkSource = new ImmutableSecret<>(secretKey);
+        return NimbusJwtDecoder.withSecretKey(secretKey).build();
     }
 }

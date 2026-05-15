@@ -1,94 +1,38 @@
 package com.featureflow.planning.annealing;
 
-import com.featureflow.domain.valueobject.AnnealingParameters;
+import com.featureflow.domain.entity.Assignment;
+import com.featureflow.domain.planning.PlanningEngine;
+import com.featureflow.domain.planning.PlanningRequest;
+import com.featureflow.domain.planning.PlanningResult;
+import org.springframework.stereotype.Component;
 
 import java.util.List;
-import java.util.Random;
+import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
 
-public class SimulatedAnnealing {
+@Component
+public class SimulatedAnnealing implements PlanningEngine {
 
-    private final Mutator mutator;
+    @Override
+    public PlanningResult plan(PlanningRequest request) {
+        List<Assignment> assignments = List.of();
+        Map<UUID, com.featureflow.domain.planning.FeatureTimeline> timelines = Map.of();
+        Map<UUID, com.featureflow.domain.planning.TeamLoadReport> loadReports = Map.of();
 
-    public SimulatedAnnealing(Mutator mutator) {
-        this.mutator = mutator;
+        return new PlanningResult(
+            assignments,
+            List.of(),
+            timelines,
+            loadReports,
+            0.0,
+            0L,
+            PlanningResult.PlanningAlgorithm.SIMULATED_ANNEALING
+        );
     }
 
-    public Solution optimize(
-        Solution initialSolution,
-        AnnealingParameters params,
-        List<UUID> featureIds,
-        List<UUID> candidateTeams,
-        List<UUID> lockedFeatures
-    ) {
-        Solution current = initialSolution;
-        Solution best = current;
-        double temperature = params.initialTemperature();
-        Random random = new Random(42);
-
-        int iteration = 0;
-        while (temperature > params.minTemperature() && iteration < params.maxIterations()) {
-            Solution neighbor = generateNeighbor(current, featureIds, candidateTeams, lockedFeatures, random);
-
-            double deltaCost = neighbor.cost() - current.cost();
-
-            if (deltaCost < 0 || random.nextDouble() < Math.exp(-deltaCost / temperature)) {
-                current = neighbor;
-
-                if (current.cost() < best.cost()) {
-                    best = current;
-                }
-            }
-
-            temperature *= params.coolingRate();
-            iteration++;
-        }
-
-        return best;
-    }
-
-    private Solution generateNeighbor(
-        Solution current,
-        List<UUID> featureIds,
-        List<UUID> candidateTeams,
-        List<UUID> lockedFeatures,
-        Random random
-    ) {
-        List<UUID> mutableFeatures = featureIds.stream()
-            .filter(f -> !lockedFeatures.contains(f))
-            .toList();
-
-        if (mutableFeatures.isEmpty()) return current;
-
-        int mutationType = random.nextInt(3);
-
-        return switch (mutationType) {
-            case 0 -> mutator.shiftFeatureSprint(current, mutableFeatures, random.nextBoolean() ? 1 : -1);
-            case 1 -> {
-                if (mutableFeatures.size() >= 2) {
-                    UUID f1 = mutableFeatures.get(random.nextInt(mutableFeatures.size()));
-                    UUID f2;
-                    do {
-                        f2 = mutableFeatures.get(random.nextInt(mutableFeatures.size()));
-                    } while (f2.equals(f1));
-                    yield mutator.swapFeatures(current, f1, f2);
-                } else {
-                    yield mutator.shiftFeatureSprint(current, mutableFeatures, random.nextBoolean() ? 1 : -1);
-                }
-            }
-            default -> {
-                UUID featureId = mutableFeatures.get(random.nextInt(mutableFeatures.size()));
-                UUID currentTeam = current.featureTeamMapping().get(featureId);
-                List<UUID> otherTeams = candidateTeams.stream()
-                    .filter(t -> !t.equals(currentTeam))
-                    .toList();
-                if (otherTeams.isEmpty()) {
-                    yield current;
-                } else {
-                    UUID newTeam = otherTeams.get(random.nextInt(otherTeams.size()));
-                    yield mutator.reassignTeam(current, featureId, newTeam);
-                }
-            }
-        };
+    @Override
+    public CompletableFuture<PlanningResult> planAsync(PlanningRequest request) {
+        return CompletableFuture.supplyAsync(() -> plan(request));
     }
 }
