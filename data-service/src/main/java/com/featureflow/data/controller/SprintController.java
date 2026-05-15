@@ -1,8 +1,10 @@
 package com.featureflow.data.controller;
 
-import com.featureflow.data.entity.SprintEntity;
-import com.featureflow.data.repository.SprintRepository;
-import jakarta.persistence.EntityNotFoundException;
+import com.featureflow.data.dto.CreateSprintRequest;
+import com.featureflow.data.dto.SprintDto;
+import com.featureflow.data.dto.UpdateSprintRequest;
+import com.featureflow.data.service.SprintService;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -13,47 +15,50 @@ import java.util.UUID;
 @RequestMapping("/api/v1/sprints")
 public class SprintController {
 
-    private final SprintRepository sprintRepository;
+    private final SprintService sprintService;
 
-    public SprintController(SprintRepository sprintRepository) {
-        this.sprintRepository = sprintRepository;
+    public SprintController(SprintService sprintService) {
+        this.sprintService = sprintService;
     }
 
     @GetMapping
-    public List<SprintEntity> list() {
-        return sprintRepository.findAll();
+    public ResponseEntity<List<SprintDto>> list(
+        @RequestParam(required = false) UUID planningWindowId
+    ) {
+        List<SprintDto> sprints;
+        if (planningWindowId != null) {
+            sprints = sprintService.listByPlanningWindow(planningWindowId);
+        } else {
+            sprints = List.of();
+        }
+        return ResponseEntity.ok(sprints);
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<SprintEntity> get(@PathVariable UUID id) {
-        return sprintRepository.findById(id)
-            .map(ResponseEntity::ok)
-            .orElse(ResponseEntity.notFound().build());
+    public ResponseEntity<SprintDto> get(@PathVariable UUID id) {
+        return ResponseEntity.ok(sprintService.getById(id));
     }
 
     @PostMapping
-    public ResponseEntity<SprintEntity> create(@RequestBody SprintEntity sprint) {
-        sprint.setId(null);
-        SprintEntity created = sprintRepository.save(sprint);
-        return ResponseEntity.status(201).body(created);
+    public ResponseEntity<SprintDto> create(
+        @RequestParam UUID planningWindowId,
+        @RequestBody CreateSprintRequest request
+    ) {
+        SprintDto created = sprintService.create(planningWindowId, request);
+        return ResponseEntity.status(HttpStatus.CREATED).body(created);
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<SprintEntity> update(@PathVariable UUID id, @RequestBody SprintEntity sprint) {
-        if (!sprintRepository.existsById(id)) {
-            return ResponseEntity.notFound().build();
-        }
-        sprint.setId(id);
-        SprintEntity updated = sprintRepository.save(sprint);
-        return ResponseEntity.ok(updated);
+    public ResponseEntity<SprintDto> update(
+        @PathVariable UUID id,
+        @RequestBody UpdateSprintRequest request
+    ) {
+        return ResponseEntity.ok(sprintService.update(id, request));
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> delete(@PathVariable UUID id) {
-        if (!sprintRepository.existsById(id)) {
-            return ResponseEntity.notFound().build();
-        }
-        sprintRepository.deleteById(id);
+        sprintService.delete(id);
         return ResponseEntity.noContent().build();
     }
 }

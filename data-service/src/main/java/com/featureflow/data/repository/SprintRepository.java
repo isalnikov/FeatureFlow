@@ -9,5 +9,7 @@ public interface SprintRepository extends JpaRepository<SprintEntity, UUID> {
 
     List<SprintEntity> findByPlanningWindowId(UUID planningWindowId);
 
+    List<SprintEntity> findByPlanningWindowIdOrderByStartDate(UUID planningWindowId);
+
     boolean existsByExternalId(String externalId);
 }
