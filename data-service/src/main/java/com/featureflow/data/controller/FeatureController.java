@@ -12,6 +12,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 @RestController
@@ -69,5 +70,26 @@ public class FeatureController {
     @PostMapping("/bulk")
     public ResponseEntity<List<FeatureDto>> bulkCreate(@RequestBody List<CreateFeatureRequest> requests) {
         return ResponseEntity.status(201).body(service.bulkCreate(requests));
+    }
+
+    @GetMapping("/{id}/deps")
+    public ResponseEntity<Set<UUID>> getDependencies(@PathVariable UUID id) {
+        try {
+            return ResponseEntity.ok(service.getDependencies(id));
+        } catch (EntityNotFoundException e) {
+            return ResponseEntity.notFound().build();
+        }
+    }
+
+    @PutMapping("/{id}/deps")
+    public ResponseEntity<Void> updateDependencies(
+            @PathVariable UUID id,
+            @RequestBody Set<UUID> dependencies) {
+        try {
+            service.updateDependencies(id, dependencies);
+            return ResponseEntity.noContent().build();
+        } catch (EntityNotFoundException e) {
+            return ResponseEntity.notFound().build();
+        }
     }
 }

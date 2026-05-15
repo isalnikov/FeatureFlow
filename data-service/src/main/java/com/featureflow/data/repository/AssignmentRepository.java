@@ -46,4 +46,7 @@ public interface AssignmentRepository extends JpaRepository<AssignmentEntity, UU
         @Param("teamId") UUID teamId,
         @Param("sprintId") UUID sprintId
     );
+
+    @Query("SELECT DISTINCT a.featureId FROM AssignmentEntity a WHERE a.status <> 'COMPLETED'")
+    List<UUID> findDistinctActiveFeatureIds();
 }

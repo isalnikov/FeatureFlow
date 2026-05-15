@@ -23,10 +23,7 @@ public class DashboardController {
     @GetMapping("/portfolio")
     public Map<String, Object> portfolio() {
         long totalFeatures = featureRepo.count();
-        long plannedFeatures = assignmentRepo.findAll().stream()
-            .map(a -> a.getFeature().getId())
-            .distinct()
-            .count();
+        long plannedFeatures = assignmentRepo.findDistinctActiveFeatureIds().size();
         return Map.of(
             "totalFeatures", totalFeatures,
             "plannedFeatures", plannedFeatures,

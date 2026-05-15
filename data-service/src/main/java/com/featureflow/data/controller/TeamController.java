@@ -9,6 +9,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 @RestController
@@ -55,6 +56,28 @@ public class TeamController {
         try {
             service.delete(id);
             return ResponseEntity.noContent().build();
+        } catch (EntityNotFoundException e) {
+            return ResponseEntity.notFound().build();
+        }
+    }
+
+    @GetMapping("/{id}/capacity")
+    public ResponseEntity<Map<String, Double>> capacity(
+            @PathVariable UUID id,
+            @RequestParam UUID sprintId) {
+        try {
+            return ResponseEntity.ok(service.getCapacityForSprint(id, sprintId));
+        } catch (EntityNotFoundException e) {
+            return ResponseEntity.notFound().build();
+        }
+    }
+
+    @GetMapping("/{id}/load")
+    public ResponseEntity<Double> load(
+            @PathVariable UUID id,
+            @RequestParam UUID sprintId) {
+        try {
+            return ResponseEntity.ok(service.getTeamLoad(id, sprintId));
         } catch (EntityNotFoundException e) {
             return ResponseEntity.notFound().build();
         }
