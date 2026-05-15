@@ -20,6 +20,11 @@ public final class FeatureSorter {
         Map<UUID, FeatureRequest> featureMap = features.stream()
             .collect(Collectors.toMap(FeatureRequest::getId, Function.identity()));
 
+        Map<UUID, Integer> originalIndex = new HashMap<>();
+        for (int i = 0; i < features.size(); i++) {
+            originalIndex.put(features.get(i).getId(), i);
+        }
+
         Map<UUID, Integer> inDegree = new HashMap<>();
         Map<UUID, List<UUID>> dependents = new HashMap<>();
 
@@ -38,9 +43,7 @@ public final class FeatureSorter {
         PriorityQueue<FeatureRequest> queue = new PriorityQueue<>(
             Comparator.<FeatureRequest>comparingDouble(FeatureRequest::getBusinessValue)
                 .reversed()
-                .thenComparing(f -> featureMap.keySet().stream()
-                    .toList()
-                    .indexOf(f.getId()))
+                .thenComparing(f -> originalIndex.getOrDefault(f.getId(), 0))
         );
 
         for (FeatureRequest f : features) {

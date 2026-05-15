@@ -29,7 +29,7 @@ public class SprintController {
         if (planningWindowId != null) {
             sprints = sprintService.listByPlanningWindow(planningWindowId);
         } else {
-            sprints = List.of();
+            sprints = sprintService.listAll();
         }
         return ResponseEntity.ok(sprints);
     }

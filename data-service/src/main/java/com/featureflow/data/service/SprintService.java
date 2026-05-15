@@ -32,6 +32,12 @@ public class SprintService {
         this.mapper = mapper;
     }
 
+    public List<SprintDto> listAll() {
+        return sprintRepository.findAll().stream()
+            .map(mapper::toSprintDto)
+            .collect(Collectors.toList());
+    }
+
     public List<SprintDto> listByPlanningWindow(UUID planningWindowId) {
         return sprintRepository.findByPlanningWindowIdOrderByStartDate(planningWindowId).stream()
             .map(mapper::toSprintDto)

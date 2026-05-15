@@ -17,6 +17,7 @@ public class TeamEntity {
     private String name;
 
     @OneToMany(mappedBy = "team", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonIgnore
     private List<TeamMemberEntity> members = new ArrayList<>();
 
     @Column(name = "focus_factor")

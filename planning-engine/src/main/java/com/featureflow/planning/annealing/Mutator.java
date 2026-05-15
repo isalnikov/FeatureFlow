@@ -9,16 +9,28 @@ public class Mutator {
 
         return switch (mutationType) {
             case 0 -> shiftFeatureSprint(current, featureIds, random);
-            case 1 -> swapFeatures(current, featureIds, random);
+            case 1 -> swapFeaturesRandom(current, featureIds, random);
             default -> current;
         };
     }
 
     public Solution apply(Solution current, List<UUID> featureIds, List<UUID> candidateTeams, Random random) {
-        return reassignTeam(current, featureIds, candidateTeams, random);
+        return reassignTeamRandom(current, featureIds, candidateTeams, random);
     }
 
     Solution shiftFeatureSprint(Solution current, List<UUID> featureIds, int direction) {
+        return shiftFeatureSprint(current, featureIds, direction > 0 ? 1 : -1, new Random(42));
+    }
+
+    Solution swapFeatures(Solution current, UUID f1, UUID f2) {
+        return swapFeatures(current, List.of(f1, f2), new Random(42));
+    }
+
+    Solution reassignTeam(Solution current, UUID featureId, UUID newTeam) {
+        return reassignTeam(current, List.of(featureId), List.of(newTeam), new Random(42));
+    }
+
+    private Solution shiftFeatureSprint(Solution current, List<UUID> featureIds, int direction, Random random) {
         UUID featureId = featureIds.get(0);
         int currentSprint = current.featureSprintIndex().getOrDefault(featureId, 0);
         int newSprint = Math.max(0, currentSprint + direction);
@@ -34,7 +46,12 @@ public class Mutator {
         );
     }
 
-    Solution swapFeatures(Solution current, UUID f1, UUID f2) {
+    private Solution swapFeatures(Solution current, List<UUID> featureIds, Random random) {
+        if (featureIds.size() < 2) return current;
+
+        UUID f1 = featureIds.get(0);
+        UUID f2 = featureIds.get(1);
+
         var newSprintIndex = new HashMap<>(current.featureSprintIndex());
         Integer s1 = newSprintIndex.get(f1);
         Integer s2 = newSprintIndex.get(f2);
@@ -52,11 +69,17 @@ public class Mutator {
         );
     }
 
-    Solution reassignTeam(Solution current, UUID featureId, UUID newTeam) {
+    private Solution reassignTeam(Solution current, List<UUID> featureIds, List<UUID> candidateTeams, Random random) {
+        UUID featureId = featureIds.get(0);
         UUID currentTeam = current.featureTeamMapping().get(featureId);
-        if (currentTeam != null && currentTeam.equals(newTeam)) {
-            return current;
-        }
+
+        List<UUID> otherTeams = candidateTeams.stream()
+            .filter(t -> !t.equals(currentTeam))
+            .toList();
+
+        if (otherTeams.isEmpty()) return current;
+
+        UUID newTeam = otherTeams.get(0);
 
         var newTeamMapping = new HashMap<>(current.featureTeamMapping());
         newTeamMapping.put(featureId, newTeam);
@@ -86,7 +109,7 @@ public class Mutator {
         );
     }
 
-    private Solution swapFeatures(Solution current, List<UUID> featureIds, Random random) {
+    private Solution swapFeaturesRandom(Solution current, List<UUID> featureIds, Random random) {
         if (featureIds.size() < 2) return current;
 
         int i1 = random.nextInt(featureIds.size());
@@ -115,7 +138,7 @@ public class Mutator {
         );
     }
 
-    private Solution reassignTeam(Solution current, List<UUID> featureIds, List<UUID> candidateTeams, Random random) {
+    private Solution reassignTeamRandom(Solution current, List<UUID> featureIds, List<UUID> candidateTeams, Random random) {
         UUID featureId = featureIds.get(random.nextInt(featureIds.size()));
         UUID currentTeam = current.featureTeamMapping().get(featureId);
 
