@@ -19,17 +19,20 @@ jobs:
           distribution: 'temurin'
           cache: maven
 
-      - name: Run unit tests
-        run: mvn test -pl domain-core --batch-mode
+      - name: Run all module tests
+        run: mvn test -pl domain-core,planning-engine,data-service --batch-mode
 
-      - name: Run JaCoCo coverage check
-        run: mvn jacoco:check -pl domain-core --batch-mode
+      - name: Run JaCoCo coverage checks
+        run: mvn verify -pl domain-core,planning-engine --batch-mode
 
-      - name: Upload coverage report
+      - name: Upload coverage reports
         uses: actions/upload-artifact@v4
         with:
-          name: coverage-report
-          path: domain-core/target/site/jacoco/
+          name: coverage-reports
+          path: |
+            domain-core/target/site/jacoco/
+            planning-engine/target/site/jacoco/
+            data-service/target/site/jacoco/
 
   build:
     needs: test
