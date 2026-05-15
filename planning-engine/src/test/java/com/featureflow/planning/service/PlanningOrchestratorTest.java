@@ -83,6 +83,82 @@ class PlanningOrchestratorTest {
         assertThat(result.totalCost()).isEqualTo(80.0);
     }
 
+    @Test
+    void runFullPipeline_withConflicts_includesConflicts() {
+        UUID f1 = uuid("f1");
+        UUID t1 = uuid("t1");
+        UUID s1 = uuid("s1");
+
+        Conflict conflict = new Conflict(
+            Conflict.Type.CAPACITY_EXCEEDED, f1, null, "No capacity"
+        );
+
+        PlanningResult greedyResult = new PlanningResult(
+            List.of(),
+            List.of(conflict),
+            Map.of(),
+            Map.of(),
+            0.0,
+            50,
+            PlanningResult.PlanningAlgorithm.GREEDY
+        );
+
+        Solution optimizedSolution = new Solution(
+            Map.of(),
+            Map.of(),
+            Map.of(),
+            0.0
+        );
+
+        when(greedyPlanner.plan(any())).thenReturn(greedyResult);
+        when(annealing.optimize(any(), any(), any(), any(), any())).thenReturn(optimizedSolution);
+        when(monteCarlo.simulate(any(), any(), any(), any())).thenReturn(Map.of());
+
+        PlanningRequest request = createTestRequest(f1, t1, s1);
+
+        PlanningResult result = orchestrator.runFullPipeline(request);
+
+        assertThat(result.conflicts()).hasSize(1);
+        assertThat(result.conflicts().get(0).type()).isEqualTo(Conflict.Type.CAPACITY_EXCEEDED);
+    }
+
+    @Test
+    void runFullPipeline_usesOptimizedCost() {
+        UUID f1 = uuid("f1");
+        UUID t1 = uuid("t1");
+        UUID s1 = uuid("s1");
+
+        Assignment assignment = new Assignment(uuid("a1"), f1, t1, s1);
+        FeatureTimeline timeline = new FeatureTimeline(f1, LocalDate.of(2025, 1, 1), LocalDate.of(2025, 1, 14), 1.0);
+
+        PlanningResult greedyResult = new PlanningResult(
+            List.of(assignment),
+            List.of(),
+            Map.of(f1, timeline),
+            Map.of(),
+            200.0,
+            50,
+            PlanningResult.PlanningAlgorithm.GREEDY
+        );
+
+        Solution optimizedSolution = new Solution(
+            Map.of(f1, assignment),
+            Map.of(f1, 0),
+            Map.of(f1, t1),
+            150.0
+        );
+
+        when(greedyPlanner.plan(any())).thenReturn(greedyResult);
+        when(annealing.optimize(any(), any(), any(), any(), any())).thenReturn(optimizedSolution);
+        when(monteCarlo.simulate(any(), any(), any(), any())).thenReturn(Map.of());
+
+        PlanningRequest request = createTestRequest(f1, t1, s1);
+
+        PlanningResult result = orchestrator.runFullPipeline(request);
+
+        assertThat(result.totalCost()).isEqualTo(150.0);
+    }
+
     private PlanningRequest createTestRequest(UUID f1, UUID t1, UUID s1) {
         FeatureRequest feature = new FeatureRequest(f1, "f1", "", 50.0);
         feature.setEffortEstimate(new EffortEstimate(40, 0, 0, 0));
