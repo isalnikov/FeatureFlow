@@ -5,6 +5,7 @@ import org.hibernate.annotations.JdbcTypeCode;
 import jakarta.persistence.*;
 import org.hibernate.type.SqlTypes;
 import java.time.Instant;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.UUID;
 
@@ -30,7 +31,7 @@ public class AssignmentEntity {
 
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "allocated_effort", columnDefinition = "jsonb", nullable = false)
-    private Map<String, Double> allocatedEffort = Map.of("backendHours", 0.0, "frontendHours", 0.0, "qaHours", 0.0, "devopsHours", 0.0);
+    private Map<String, Double> allocatedEffort = new LinkedHashMap<>(Map.of("backendHours", 0.0, "frontendHours", 0.0, "qaHours", 0.0, "devopsHours", 0.0));
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)

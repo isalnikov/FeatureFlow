@@ -3,6 +3,7 @@ package com.featureflow.domain.rules;
 import com.featureflow.domain.entity.Assignment;
 import com.featureflow.domain.entity.Sprint;
 import com.featureflow.domain.entity.Team;
+import com.featureflow.domain.valueobject.AssignmentStatus;
 
 import java.util.List;
 import java.util.UUID;
@@ -21,12 +22,12 @@ public final class ParallelismValidator {
         long activeFeatures = assignments.stream()
             .filter(a -> a.getTeamId().equals(team.getId()))
             .filter(a -> a.getSprintId().equals(sprint.id()))
-            .filter(a -> !a.getStatus().name().equals("COMPLETED"))
+            .filter(a -> a.getStatus() != AssignmentStatus.COMPLETED)
             .map(Assignment::getFeatureId)
             .distinct()
             .count();
 
-        return activeFeatures < MAX_PARALLEL_FEATURES;
+        return activeFeatures <= MAX_PARALLEL_FEATURES;
     }
 
     public static boolean withinParallelismLimit(
@@ -38,12 +39,12 @@ public final class ParallelismValidator {
         long activeFeatures = assignments.stream()
             .filter(a -> a.getTeamId().equals(team.getId()))
             .filter(a -> a.getSprintId().equals(sprint.id()))
-            .filter(a -> !a.getStatus().name().equals("COMPLETED"))
+            .filter(a -> a.getStatus() != AssignmentStatus.COMPLETED)
             .map(Assignment::getFeatureId)
             .distinct()
             .count();
 
-        return activeFeatures < maxParallel;
+        return activeFeatures <= maxParallel;
     }
 
     public static long countActiveFeatures(
@@ -54,7 +55,7 @@ public final class ParallelismValidator {
         return assignments.stream()
             .filter(a -> a.getTeamId().equals(teamId))
             .filter(a -> a.getSprintId().equals(sprintId))
-            .filter(a -> !a.getStatus().name().equals("COMPLETED"))
+            .filter(a -> a.getStatus() != AssignmentStatus.COMPLETED)
             .map(Assignment::getFeatureId)
             .distinct()
             .count();

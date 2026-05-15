@@ -45,7 +45,7 @@ public class FeatureEntity {
 
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "effort_estimate", columnDefinition = "jsonb")
-    private Map<String, Double> effortEstimate = Map.of("backendHours", 0.0, "frontendHours", 0.0, "qaHours", 0.0, "devopsHours", 0.0);
+    private Map<String, Double> effortEstimate = new LinkedHashMap<>(Map.of("backendHours", 0.0, "frontendHours", 0.0, "qaHours", 0.0, "devopsHours", 0.0));
 
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "stochastic_estimate", columnDefinition = "jsonb")

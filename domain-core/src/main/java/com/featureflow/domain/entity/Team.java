@@ -46,6 +46,12 @@ public final class Team {
     public void setDefaultCapacity(Capacity capacity) { this.defaultCapacity = capacity; }
 
     public Capacity effectiveCapacityForSprint(Sprint sprint) {
+        if (sprint != null && sprint.capacityOverrides() != null) {
+            Capacity override = sprint.capacityOverrides().get(this.id);
+            if (override != null) {
+                return override;
+            }
+        }
         DateRange override = calendar.get(id);
         if (override == null) {
             return defaultCapacity;
