@@ -81,6 +81,34 @@ class MonteCarloSimulatorTest {
         assertThat(prob.probability()).isLessThan(0.5);
     }
 
+    @Test
+    void simulate_perturbedDatesNearBaseDate() {
+        UUID f1 = uuid("f1");
+        FeatureRequest feature = new FeatureRequest(f1, "f1", "", 50.0);
+        feature.setDeadline(LocalDate.of(2026, 6, 1));
+        feature.setEffortEstimate(new EffortEstimate(40, 0, 0, 0));
+        feature.setStochasticEstimate(new ThreePointEstimate(30, 40, 60));
+
+        LocalDate baseDate = LocalDate.of(2026, 3, 15);
+        MonteCarloParameters params = new MonteCarloParameters(500, 0.95);
+
+        MonteCarloSimulator simulator = new MonteCarloSimulator();
+        Map<UUID, FeatureDeadlineProbability> results = simulator.simulate(
+            List.of(feature),
+            Map.of(f1, baseDate),
+            params,
+            new Random(42)
+        );
+
+        FeatureDeadlineProbability prob = results.get(f1);
+        assertThat(prob.percentile50()).isNotNull();
+        assertThat(prob.percentile50()).isAfter(LocalDate.of(2025, 1, 1));
+        assertThat(prob.percentile50()).isBefore(LocalDate.of(2030, 1, 1));
+        assertThat(prob.percentile90()).isNotNull();
+        assertThat(prob.percentile90()).isAfter(LocalDate.of(2025, 1, 1));
+        assertThat(prob.percentile90()).isBefore(LocalDate.of(2030, 1, 1));
+    }
+
     private UUID uuid(String suffix) {
         return UUID.nameUUIDFromBytes(suffix.getBytes());
     }

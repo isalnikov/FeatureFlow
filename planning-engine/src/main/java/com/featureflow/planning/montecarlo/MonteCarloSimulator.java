@@ -57,8 +57,11 @@ public class MonteCarloSimulator {
         double expected = estimate.expected();
         double ratio = sampled / expected;
 
-        long daysDiff = (long) ((baseDate.toEpochDay() - LocalDate.of(2025, 1, 1).toEpochDay()) * ratio);
-        return LocalDate.of(2025, 1, 1).plusDays(daysDiff);
+        long baseDays = baseDate.toEpochDay();
+        long referenceDays = LocalDate.of(baseDate.getYear() - 1, 1, 1).toEpochDay();
+        long durationFromRef = baseDays - referenceDays;
+        long perturbedDays = referenceDays + Math.round(durationFromRef * ratio);
+        return LocalDate.ofEpochDay(perturbedDays);
     }
 
     private double sampleTriangular(double min, double mode, double max, Random random) {
