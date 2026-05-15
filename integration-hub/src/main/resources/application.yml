@@ -1,0 +1,33 @@
+server:
+  port: 8082
+
+spring:
+  threads:
+    virtual:
+      enabled: true
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+  endpoint:
+    health:
+      show-details: always
+      probes:
+        enabled: true
+
+featureflow:
+  integration:
+    sync-interval: 300000
+    connectors:
+      jira:
+        enabled: true
+        base-url: ${JIRA_BASE_URL:}
+        auth-type: ${JIRA_AUTH_TYPE:basic}
+    retry:
+      max-attempts: 3
+      backoff-delay: 1000
+    circuit-breaker:
+      failure-threshold: 50
+      wait-duration: 60000
