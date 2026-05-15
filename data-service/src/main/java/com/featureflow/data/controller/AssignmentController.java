@@ -1,75 +1,90 @@
 package com.featureflow.data.controller;
 
-import com.featureflow.data.entity.AssignmentEntity;
-import com.featureflow.data.repository.AssignmentRepository;
+import com.featureflow.data.dto.AssignmentDto;
+import com.featureflow.data.dto.CreateAssignmentRequest;
+import com.featureflow.data.dto.UpdateAssignmentRequest;
+import com.featureflow.data.service.AssignmentService;
 import com.featureflow.domain.valueobject.AssignmentStatus;
-
+import jakarta.persistence.EntityNotFoundException;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
 import java.util.List;
 import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/v1/assignments")
-
 public class AssignmentController {
 
-    private final AssignmentRepository repository;
+    private final AssignmentService service;
 
-    public AssignmentController(AssignmentRepository repository) {
-        this.repository = repository;
+    public AssignmentController(AssignmentService service) {
+        this.service = service;
     }
+
     @GetMapping
-    public List<AssignmentEntity> list(
+    public List<AssignmentDto> list(
         @RequestParam(required = false) UUID teamId,
         @RequestParam(required = false) UUID sprintId,
         @RequestParam(required = false) AssignmentStatus status
     ) {
-        if (teamId != null && sprintId != null) return repository.findByTeamAndSprint(teamId, sprintId);
-        if (teamId != null) return repository.findByTeamId(teamId);
-        if (sprintId != null) return repository.findBySprintId(sprintId);
-        if (status != null) return repository.findByStatus(status);
-        return repository.findAll();
+        if (teamId != null) {
+            return service.findByTeamId(teamId);
+        }
+        if (sprintId != null) {
+            return service.findBySprintId(sprintId);
+        }
+        if (status != null) {
+            return service.findByStatus(status.name());
+        }
+        return service.listAll();
     }
 
     @PostMapping
-    public ResponseEntity<AssignmentEntity> create(@RequestBody AssignmentEntity entity) {
-        entity.setId(null);
-        return ResponseEntity.status(201).body(repository.save(entity));
+    public ResponseEntity<AssignmentDto> create(@RequestBody CreateAssignmentRequest request) {
+        AssignmentDto created = service.create(request);
+        return ResponseEntity.status(201).body(created);
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<AssignmentEntity> update(@PathVariable UUID id, @RequestBody AssignmentEntity entity) {
-        if (!repository.existsById(id)) return ResponseEntity.notFound().build();
-        entity.setId(id);
-        return ResponseEntity.ok(repository.save(entity));
+    public ResponseEntity<AssignmentDto> update(@PathVariable UUID id, @RequestBody UpdateAssignmentRequest request) {
+        try {
+            return ResponseEntity.ok(service.update(id, request));
+        } catch (EntityNotFoundException e) {
+            return ResponseEntity.notFound().build();
+        }
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> delete(@PathVariable UUID id) {
-        if (!repository.existsById(id)) return ResponseEntity.notFound().build();
-        repository.deleteById(id);
-        return ResponseEntity.noContent().build();
+        try {
+            service.delete(id);
+            return ResponseEntity.noContent().build();
+        } catch (EntityNotFoundException e) {
+            return ResponseEntity.notFound().build();
+        }
     }
 
     @PutMapping("/{id}/lock")
-    public ResponseEntity<AssignmentEntity> lock(@PathVariable UUID id) {
-        return repository.findById(id).map(a -> {
-            a.setStatus(AssignmentStatus.LOCKED);
-            return ResponseEntity.ok(repository.save(a));
-        }).orElse(ResponseEntity.notFound().build());
+    public ResponseEntity<AssignmentDto> lock(@PathVariable UUID id) {
+        try {
+            return ResponseEntity.ok(service.lock(id));
+        } catch (EntityNotFoundException e) {
+            return ResponseEntity.notFound().build();
+        }
     }
 
     @PutMapping("/{id}/unlock")
-    public ResponseEntity<AssignmentEntity> unlock(@PathVariable UUID id) {
-        return repository.findById(id).map(a -> {
-            a.setStatus(AssignmentStatus.PLANNED);
-            return ResponseEntity.ok(repository.save(a));
-        }).orElse(ResponseEntity.notFound().build());
+    public ResponseEntity<AssignmentDto> unlock(@PathVariable UUID id) {
+        try {
+            return ResponseEntity.ok(service.unlock(id));
+        } catch (EntityNotFoundException e) {
+            return ResponseEntity.notFound().build();
+        }
     }
 
     @PostMapping("/bulk")
-    public List<AssignmentEntity> bulkUpdate(@RequestBody List<AssignmentEntity> entities) {
-        return repository.saveAll(entities);
+    public ResponseEntity<List<AssignmentDto>> bulkCreate(@RequestBody List<CreateAssignmentRequest> requests) {
+        return ResponseEntity.status(201).body(service.bulkCreate(requests));
     }
 }

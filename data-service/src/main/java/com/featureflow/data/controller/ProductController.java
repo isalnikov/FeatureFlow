@@ -1,60 +1,72 @@
 package com.featureflow.data.controller;
 
-import com.featureflow.data.entity.ProductEntity;
-import com.featureflow.data.repository.ProductRepository;
-
+import com.featureflow.data.dto.CreateProductRequest;
+import com.featureflow.data.dto.ProductDto;
+import com.featureflow.data.dto.TeamDto;
+import com.featureflow.data.dto.UpdateProductRequest;
+import com.featureflow.data.service.ProductService;
+import jakarta.persistence.EntityNotFoundException;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
 import java.util.List;
 import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/v1/products")
-
 public class ProductController {
 
-    private final ProductRepository repository;
+    private final ProductService service;
 
-    public ProductController(ProductRepository repository) {
-        this.repository = repository;
+    public ProductController(ProductService service) {
+        this.service = service;
     }
 
     @GetMapping
-    public List<ProductEntity> list() {
-        return repository.findAll();
+    public List<ProductDto> list() {
+        return service.listAll();
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<ProductEntity> get(@PathVariable UUID id) {
-        return repository.findById(id)
-            .map(ResponseEntity::ok)
-            .orElse(ResponseEntity.notFound().build());
+    public ResponseEntity<ProductDto> get(@PathVariable UUID id) {
+        try {
+            return ResponseEntity.ok(service.getById(id));
+        } catch (EntityNotFoundException e) {
+            return ResponseEntity.notFound().build();
+        }
     }
 
     @PostMapping
-    public ResponseEntity<ProductEntity> create(@RequestBody ProductEntity entity) {
-        entity.setId(null);
-        return ResponseEntity.status(201).body(repository.save(entity));
+    public ResponseEntity<ProductDto> create(@RequestBody CreateProductRequest request) {
+        ProductDto created = service.create(request);
+        return ResponseEntity.status(201).body(created);
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<ProductEntity> update(@PathVariable UUID id, @RequestBody ProductEntity entity) {
-        if (!repository.existsById(id)) return ResponseEntity.notFound().build();
-        entity.setId(id);
-        return ResponseEntity.ok(repository.save(entity));
+    public ResponseEntity<ProductDto> update(@PathVariable UUID id, @RequestBody UpdateProductRequest request) {
+        try {
+            return ResponseEntity.ok(service.update(id, request));
+        } catch (EntityNotFoundException e) {
+            return ResponseEntity.notFound().build();
+        }
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> delete(@PathVariable UUID id) {
-        if (!repository.existsById(id)) return ResponseEntity.notFound().build();
-        repository.deleteById(id);
-        return ResponseEntity.noContent().build();
+        try {
+            service.delete(id);
+            return ResponseEntity.noContent().build();
+        } catch (EntityNotFoundException e) {
+            return ResponseEntity.notFound().build();
+        }
     }
 
     @GetMapping("/{id}/teams")
-    public ResponseEntity<ProductEntity> getWithTeams(@PathVariable UUID id) {
-        return repository.findById(id)
-            .map(ResponseEntity::ok)
-            .orElse(ResponseEntity.notFound().build());
+    public ResponseEntity<List<TeamDto>> getWithTeams(@PathVariable UUID id) {
+        try {
+            return ResponseEntity.ok(service.getTeams(id));
+        } catch (EntityNotFoundException e) {
+            return ResponseEntity.notFound().build();
+        }
     }
 }

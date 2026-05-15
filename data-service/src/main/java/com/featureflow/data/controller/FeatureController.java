@@ -1,67 +1,73 @@
 package com.featureflow.data.controller;
 
-import com.featureflow.data.entity.FeatureEntity;
-import com.featureflow.data.repository.FeatureRepository;
+import com.featureflow.data.dto.CreateFeatureRequest;
+import com.featureflow.data.dto.FeatureDto;
+import com.featureflow.data.dto.UpdateFeatureRequest;
+import com.featureflow.data.service.FeatureService;
 import com.featureflow.domain.valueobject.ClassOfService;
-
+import jakarta.persistence.EntityNotFoundException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
 import java.util.List;
 import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/v1/features")
-
 public class FeatureController {
 
-    private final FeatureRepository repository;
+    private final FeatureService service;
 
-    public FeatureController(FeatureRepository repository) {
-        this.repository = repository;
+    public FeatureController(FeatureService service) {
+        this.service = service;
     }
+
     @GetMapping
-    public Page<FeatureEntity> list(
+    public Page<FeatureDto> list(
         @RequestParam(required = false) ClassOfService classOfService,
         Pageable pageable
     ) {
-        if (classOfService != null) {
-            return repository.findByClassOfService(classOfService, pageable);
-        }
-        return repository.findAll(pageable);
+        return service.listAll(pageable);
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<FeatureEntity> get(@PathVariable UUID id) {
-        return repository.findByIdWithProducts(id) != null
-            ? ResponseEntity.ok(repository.findByIdWithProducts(id))
-            : ResponseEntity.notFound().build();
+    public ResponseEntity<FeatureDto> get(@PathVariable UUID id) {
+        try {
+            return ResponseEntity.ok(service.getById(id));
+        } catch (EntityNotFoundException e) {
+            return ResponseEntity.notFound().build();
+        }
     }
 
     @PostMapping
-    public ResponseEntity<FeatureEntity> create(@RequestBody FeatureEntity entity) {
-        entity.setId(null);
-        return ResponseEntity.status(201).body(repository.save(entity));
+    public ResponseEntity<FeatureDto> create(@RequestBody CreateFeatureRequest request) {
+        FeatureDto created = service.create(request);
+        return ResponseEntity.status(201).body(created);
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<FeatureEntity> update(@PathVariable UUID id, @RequestBody FeatureEntity entity) {
-        if (!repository.existsById(id)) return ResponseEntity.notFound().build();
-        entity.setId(id);
-        return ResponseEntity.ok(repository.save(entity));
+    public ResponseEntity<FeatureDto> update(@PathVariable UUID id, @RequestBody UpdateFeatureRequest request) {
+        try {
+            return ResponseEntity.ok(service.update(id, request));
+        } catch (EntityNotFoundException e) {
+            return ResponseEntity.notFound().build();
+        }
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> delete(@PathVariable UUID id) {
-        if (!repository.existsById(id)) return ResponseEntity.notFound().build();
-        repository.deleteById(id);
-        return ResponseEntity.noContent().build();
+        try {
+            service.delete(id);
+            return ResponseEntity.noContent().build();
+        } catch (EntityNotFoundException e) {
+            return ResponseEntity.notFound().build();
+        }
     }
 
     @PostMapping("/bulk")
-    public List<FeatureEntity> bulkCreate(@RequestBody List<FeatureEntity> entities) {
-        entities.forEach(e -> e.setId(null));
-        return repository.saveAll(entities);
+    public ResponseEntity<List<FeatureDto>> bulkCreate(@RequestBody List<CreateFeatureRequest> requests) {
+        return ResponseEntity.status(201).body(service.bulkCreate(requests));
     }
 }
