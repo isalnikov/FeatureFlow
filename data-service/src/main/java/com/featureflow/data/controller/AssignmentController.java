@@ -35,7 +35,7 @@ public class AssignmentController {
             return service.findBySprintId(sprintId);
         }
         if (status != null) {
-            return service.findByStatus(status.name());
+            return service.findByStatus(status);
         }
         return service.listAll();
     }

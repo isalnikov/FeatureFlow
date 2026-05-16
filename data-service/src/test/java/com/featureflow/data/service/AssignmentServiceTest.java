@@ -116,7 +116,7 @@ class AssignmentServiceTest {
         when(assignmentRepository.findByStatus(AssignmentStatus.PLANNED)).thenReturn(List.of(assignmentEntity));
         when(mapper.toAssignmentDto(assignmentEntity)).thenReturn(assignmentDto);
 
-        List<AssignmentDto> result = assignmentService.findByStatus("PLANNED");
+        List<AssignmentDto> result = assignmentService.findByStatus(AssignmentStatus.PLANNED);
 
         assertThat(result).hasSize(1);
     }

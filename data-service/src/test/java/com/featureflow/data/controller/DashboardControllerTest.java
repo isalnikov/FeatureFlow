@@ -74,4 +74,11 @@ class DashboardControllerTest {
             .andExpect(jsonPath("$.teams").value(3))
             .andExpect(jsonPath("$.assignments").value(5));
     }
+
+    @Test
+    void timeline_shouldReturnEmptyList() throws Exception {
+        mockMvc.perform(get("/api/v1/dashboard/timeline"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$").isEmpty());
+    }
 }

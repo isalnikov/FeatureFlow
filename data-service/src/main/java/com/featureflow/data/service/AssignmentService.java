@@ -61,9 +61,8 @@ public class AssignmentService {
                 .collect(Collectors.toList());
     }
 
-    public List<AssignmentDto> findByStatus(String status) {
-        AssignmentStatus assignmentStatus = AssignmentStatus.valueOf(status);
-        return assignmentRepository.findByStatus(assignmentStatus).stream()
+    public List<AssignmentDto> findByStatus(AssignmentStatus status) {
+        return assignmentRepository.findByStatus(status).stream()
                 .map(mapper::toAssignmentDto)
                 .collect(Collectors.toList());
     }

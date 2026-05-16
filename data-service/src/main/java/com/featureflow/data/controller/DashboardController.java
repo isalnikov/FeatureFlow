@@ -49,4 +49,9 @@ public class DashboardController {
             "assignments", assignmentRepo.count()
         );
     }
+
+    @GetMapping("/timeline")
+    public java.util.List<Map<String, Object>> timeline() {
+        return java.util.List.of();
+    }
 }

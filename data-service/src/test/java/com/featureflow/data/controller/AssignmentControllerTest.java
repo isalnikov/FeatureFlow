@@ -70,7 +70,7 @@ class AssignmentControllerTest {
     @Test
     void list_byStatus_shouldFilter() throws Exception {
         AssignmentDto dto = assignmentDto();
-        when(service.findByStatus("PLANNED")).thenReturn(List.of(dto));
+        when(service.findByStatus(AssignmentStatus.PLANNED)).thenReturn(List.of(dto));
 
         mockMvc.perform(get("/api/v1/assignments")
                 .param("status", "PLANNED"))
