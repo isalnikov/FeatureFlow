@@ -83,7 +83,8 @@ class PlanningJobServiceTest {
         assertThat(job.status()).isEqualTo(PlanningJobService.PlanningJobStatus.COMPLETED);
 
         PlanningResult actualResult = jobService.getJobResult(jobId);
-        assertThat(actualResult).isNull();
+        assertThat(actualResult).isNotNull();
+        assertThat(actualResult.algorithm()).isEqualTo(PlanningResult.PlanningAlgorithm.GREEDY);
     }
 
     @Test

@@ -1,6 +1,7 @@
 package com.featureflow.planning.montecarlo;
 
 import com.featureflow.domain.entity.FeatureRequest;
+import com.featureflow.domain.valueobject.EffortEstimate;
 import com.featureflow.domain.valueobject.MonteCarloParameters;
 import com.featureflow.domain.valueobject.ThreePointEstimate;
 
@@ -57,11 +58,15 @@ public class MonteCarloSimulator {
         double expected = estimate.expected();
         double ratio = sampled / expected;
 
-        long baseDays = baseDate.toEpochDay();
-        long referenceDays = LocalDate.of(baseDate.getYear() - 1, 1, 1).toEpochDay();
-        long durationFromRef = baseDays - referenceDays;
-        long perturbedDays = referenceDays + Math.round(durationFromRef * ratio);
-        return LocalDate.ofEpochDay(perturbedDays);
+        // Derive duration from effort estimate (8h work day)
+        EffortEstimate effort = feature.getEffortEstimate();
+        double durationDays = (effort != null && effort.totalHours() > 0)
+            ? effort.totalHours() / 8.0
+            : 5.0; // default 5-day duration if no effort estimate
+
+        // Perturb the duration, not the absolute date
+        long perturbationDays = Math.round(durationDays * (ratio - 1));
+        return baseDate.plusDays(perturbationDays);
     }
 
     private double sampleTriangular(double min, double mode, double max, Random random) {

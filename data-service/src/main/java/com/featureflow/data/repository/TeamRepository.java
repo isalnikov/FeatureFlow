@@ -5,6 +5,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 public interface TeamRepository extends JpaRepository<TeamEntity, UUID> {
@@ -15,4 +16,6 @@ public interface TeamRepository extends JpaRepository<TeamEntity, UUID> {
         WHERE pt.product_id = :productId
         """, nativeQuery = true)
     List<TeamEntity> findByProductId(@Param("productId") UUID productId);
+
+    Optional<TeamEntity> findByExternalId(String externalId);
 }

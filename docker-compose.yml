@@ -66,5 +66,18 @@ services:
       redis:
         condition: service_healthy
 
+  web-ui:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.web-ui
+    ports:
+      - "3000:80"
+    depends_on:
+      - data-service
+      - planning-engine
+    environment:
+      VITE_API_URL: http://localhost:8080/api/v1
+      VITE_PLANNING_ENGINE_URL: http://localhost:8081/api/v1
+
 volumes:
   pgdata:

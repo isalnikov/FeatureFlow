@@ -1,6 +1,7 @@
 package com.featureflow.data.controller;
 
 import com.featureflow.data.repository.*;
+import com.featureflow.data.service.DashboardService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
@@ -30,6 +31,9 @@ class DashboardControllerTest {
     @MockitoBean
     private AssignmentRepository assignmentRepo;
 
+    @MockitoBean
+    private DashboardService dashboardService;
+
     @Test
     void portfolio_shouldReturnCounts() throws Exception {
         when(featureRepo.count()).thenReturn(10L);
@@ -56,6 +60,8 @@ class DashboardControllerTest {
 
     @Test
     void conflicts_shouldReturnEmpty() throws Exception {
+        when(dashboardService.getConflicts()).thenReturn(List.of());
+
         mockMvc.perform(get("/api/v1/dashboard/conflicts"))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.active").value(0))
@@ -77,6 +83,8 @@ class DashboardControllerTest {
 
     @Test
     void timeline_shouldReturnEmptyList() throws Exception {
+        when(dashboardService.getTimeline()).thenReturn(List.of());
+
         mockMvc.perform(get("/api/v1/dashboard/timeline"))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$").isEmpty());

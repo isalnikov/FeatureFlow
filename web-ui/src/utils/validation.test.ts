@@ -33,11 +33,11 @@ describe('validateFeature', () => {
     expect(hasErrors(errors)).toBe(true);
   });
 
-  it('returns error for zero business value', () => {
+  it('returns error for business value over 100', () => {
     const errors = validateFeature({
       title: 'Test',
       description: 'A test',
-      businessValue: 0,
+      businessValue: 150,
       classOfService: 'STANDARD',
       productIds: ['p1'],
       effortEstimate: { backendHours: 10, frontendHours: 10, qaHours: 5, devopsHours: 2 },
@@ -83,9 +83,11 @@ describe('validateTeam', () => {
   it('returns empty errors for valid team', () => {
     const errors = validateTeam({
       name: 'Team Alpha',
-      members: [{ id: 'm1', name: 'Alice', role: 'BACKEND', allocation: 1.0 }],
+      members: [{ personId: 'm1', name: 'Alice', role: 'BACKEND', availabilityPercent: 100 }],
       focusFactor: 0.7,
       bugReservePercent: 0.2,
+      techDebtReservePercent: 0.1,
+      expertiseTags: [],
     });
     expect(hasErrors(errors)).toBe(false);
   });
@@ -93,9 +95,11 @@ describe('validateTeam', () => {
   it('returns error for empty name', () => {
     const errors = validateTeam({
       name: '',
-      members: [{ id: 'm1', name: 'Alice', role: 'BACKEND', allocation: 1.0 }],
+      members: [{ personId: 'm1', name: 'Alice', role: 'BACKEND', availabilityPercent: 100 }],
       focusFactor: 0.7,
       bugReservePercent: 0.2,
+      techDebtReservePercent: 0.1,
+      expertiseTags: [],
     });
     expect(errors.name).toBeDefined();
   });
@@ -106,6 +110,8 @@ describe('validateTeam', () => {
       members: [],
       focusFactor: 0.7,
       bugReservePercent: 0.2,
+      techDebtReservePercent: 0.1,
+      expertiseTags: [],
     });
     expect(errors.members).toBeDefined();
   });

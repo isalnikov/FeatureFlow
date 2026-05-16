@@ -1,9 +1,12 @@
 package com.featureflow.data.controller;
 
 import com.featureflow.data.repository.*;
+import com.featureflow.data.service.DashboardService;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+
+import java.util.List;
 import java.util.Map;
 
 @RestController
@@ -13,11 +16,14 @@ public class DashboardController {
     private final FeatureRepository featureRepo;
     private final TeamRepository teamRepo;
     private final AssignmentRepository assignmentRepo;
+    private final DashboardService dashboardService;
 
-    public DashboardController(FeatureRepository featureRepo, TeamRepository teamRepo, AssignmentRepository assignmentRepo) {
+    public DashboardController(FeatureRepository featureRepo, TeamRepository teamRepo,
+                               AssignmentRepository assignmentRepo, DashboardService dashboardService) {
         this.featureRepo = featureRepo;
         this.teamRepo = teamRepo;
         this.assignmentRepo = assignmentRepo;
+        this.dashboardService = dashboardService;
     }
 
     @GetMapping("/portfolio")
@@ -38,7 +44,8 @@ public class DashboardController {
 
     @GetMapping("/conflicts")
     public Map<String, Object> conflicts() {
-        return Map.of("active", 0, "list", java.util.List.of());
+        List<Map<String, Object>> conflicts = dashboardService.getConflicts();
+        return Map.of("active", conflicts.size(), "list", conflicts);
     }
 
     @GetMapping("/metrics")
@@ -51,7 +58,22 @@ public class DashboardController {
     }
 
     @GetMapping("/timeline")
-    public java.util.List<Map<String, Object>> timeline() {
-        return java.util.List.of();
+    public List<Map<String, Object>> timeline() {
+        return dashboardService.getTimeline();
+    }
+
+    @GetMapping("/views/team-capacity")
+    public List<Map<String, Object>> getTeamCapacityView() {
+        return dashboardService.getTeamCapacityView();
+    }
+
+    @GetMapping("/views/feature-summary")
+    public List<Map<String, Object>> getFeatureSummaryView() {
+        return dashboardService.getFeatureSummaryView();
+    }
+
+    @GetMapping("/views/sprint-load")
+    public List<Map<String, Object>> getSprintLoadView() {
+        return dashboardService.getSprintLoadView();
     }
 }

@@ -9,6 +9,7 @@ import com.featureflow.domain.valueobject.ThreePointEstimate;
 import org.junit.jupiter.api.Test;
 
 import java.time.LocalDate;
+import java.time.temporal.ChronoUnit;
 import java.util.*;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -107,6 +108,61 @@ class MonteCarloSimulatorTest {
         assertThat(prob.percentile90()).isNotNull();
         assertThat(prob.percentile90()).isAfter(LocalDate.of(2025, 1, 1));
         assertThat(prob.percentile90()).isBefore(LocalDate.of(2030, 1, 1));
+    }
+
+    @Test
+    void simulate_lateDeadline_highProbability() {
+        UUID f1 = uuid("f1");
+        FeatureRequest feature = new FeatureRequest(f1, "f1", "", 50.0);
+        feature.setDeadline(LocalDate.of(2025, 6, 1));
+        feature.setEffortEstimate(new EffortEstimate(40, 0, 0, 0));
+        feature.setStochasticEstimate(new ThreePointEstimate(30, 40, 60));
+
+        MonteCarloParameters params = new MonteCarloParameters(500, 0.95);
+
+        MonteCarloSimulator simulator = new MonteCarloSimulator();
+        Map<UUID, FeatureDeadlineProbability> results = simulator.simulate(
+            List.of(feature),
+            Map.of(f1, LocalDate.of(2025, 1, 15)),
+            params,
+            new Random(42)
+        );
+
+        FeatureDeadlineProbability prob = results.get(f1);
+        assertThat(prob.probability()).isGreaterThan(0.7);
+    }
+
+    @Test
+    void simulate_perturbationMagnitudeReasonable() {
+        UUID f1 = uuid("f1");
+        FeatureRequest feature = new FeatureRequest(f1, "f1", "", 50.0);
+        feature.setDeadline(LocalDate.of(2025, 2, 1));
+        feature.setEffortEstimate(new EffortEstimate(40, 0, 0, 0));
+        feature.setStochasticEstimate(new ThreePointEstimate(30, 40, 60));
+
+        MonteCarloParameters params = new MonteCarloParameters(100, 0.95);
+        LocalDate baseDate = LocalDate.of(2025, 1, 15);
+
+        MonteCarloSimulator simulator = new MonteCarloSimulator();
+
+        for (int i = 0; i < 20; i++) {
+            Map<UUID, FeatureDeadlineProbability> results = simulator.simulate(
+                List.of(feature),
+                Map.of(f1, baseDate),
+                params,
+                new Random(i)
+            );
+
+            FeatureDeadlineProbability prob = results.get(f1);
+            LocalDate p50 = prob.percentile50();
+            LocalDate p90 = prob.percentile90();
+
+            long p50Diff = Math.abs(ChronoUnit.DAYS.between(baseDate, p50));
+            long p90Diff = Math.abs(ChronoUnit.DAYS.between(baseDate, p90));
+
+            assertThat(p50Diff).isLessThan(30);
+            assertThat(p90Diff).isLessThan(60);
+        }
     }
 
     private UUID uuid(String suffix) {

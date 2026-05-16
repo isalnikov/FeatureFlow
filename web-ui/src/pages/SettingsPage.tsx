@@ -75,12 +75,12 @@ export function SettingsPage() {
       setImporting(true);
       setImportResult(null);
       const config = type === 'jira'
-        ? { baseUrl: integrationConfig.jiraUrl, authType: 'basic' as const, username: integrationConfig.jiraUsername, apiToken: integrationConfig.jiraToken }
+        ? { baseUrl: integrationConfig.jiraUrl || 'https://default.atlassian.net', authType: 'basic' as const, username: integrationConfig.jiraUsername, apiToken: integrationConfig.jiraToken }
         : type === 'ado'
-          ? { baseUrl: integrationConfig.adoUrl, authType: 'token' as const, apiToken: integrationConfig.adoToken }
-          : { authType: 'token' as const, apiToken: '' };
+          ? { baseUrl: integrationConfig.adoUrl || 'https://dev.azure.com/default', authType: 'token' as const, apiToken: integrationConfig.adoToken }
+          : { baseUrl: 'https://api.linear.app', authType: 'token' as const, apiToken: '' };
       const result = await integrationsApi.import(type, config, {});
-      setImportResult(`Imported ${result.itemsImported} items from ${type}`);
+      setImportResult(`Imported ${result.featuresCreated + result.featuresUpdated} features from ${type}`);
     } catch (error) {
       setImportResult(`Import failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
     } finally {
