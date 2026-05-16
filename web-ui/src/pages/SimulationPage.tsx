@@ -1,26 +1,51 @@
 import { useState } from 'react';
-import { PlanningControls } from '../components/planning/PlanningControls';
 import { PlanComparison } from '../components/planning/PlanComparison';
-import { TeamLoadChart } from '../components/planning/TeamLoadChart';
 import { Button } from '../components/common/Button';
-import type { PlanningResult, SimulationChanges } from '../types';
+import { planningApi } from '../api/planning';
+import type { PlanningResult, PlanningJob, SimulationChanges, PlanningRunRequest } from '../types';
 
 export function SimulationPage() {
   const [baselinePlan, setBaselinePlan] = useState<PlanningResult | null>(null);
   const [simulatedPlan, setSimulatedPlan] = useState<PlanningResult | null>(null);
   const [changes, setChanges] = useState<SimulationChanges>({});
   const [isRunning, setIsRunning] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const handleRunSimulation = async () => {
-    setIsRunning(true);
-    // TODO: Implement simulation logic
-    // 1. Clone current plan as baseline
-    // 2. Apply changes
-    // 3. Run planning with modified parameters
-    // 4. Compare results
-    setTimeout(() => {
+    try {
+      setIsRunning(true);
+      setError(null);
+
+      const request: PlanningRunRequest = {
+        featureIds: [],
+        teamIds: [],
+        parameters: {
+          w1Ttm: changes.priorityChanges ? 1.5 : 1.0,
+          w2Underutilization: 0.5,
+          w3DeadlinePenalty: 2.0,
+        },
+      };
+
+      const job = await planningApi.run(request);
+
+      while (true) {
+        await new Promise((resolve) => setTimeout(resolve, 1000));
+        const status = await planningApi.getJobStatus(job.jobId);
+        if (status.status === 'DONE' || status.status === 'FAILED') break;
+      }
+
+      const result = await planningApi.getResult(job.jobId);
+
+      if (!baselinePlan) {
+        setBaselinePlan(result);
+      } else {
+        setSimulatedPlan(result);
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Simulation failed');
+    } finally {
       setIsRunning(false);
-    }, 2000);
+    }
   };
 
   return (
@@ -65,18 +90,29 @@ export function SimulationPage() {
           </div>
         </div>
 
-        <Button onClick={handleRunSimulation} loading={isRunning}>
-          Run Simulation
-        </Button>
+        <div className="flex items-center gap-3">
+          <Button onClick={handleRunSimulation} loading={isRunning}>
+            Run Simulation
+          </Button>
+          {error && <span className="text-sm text-red-600">{error}</span>}
+        </div>
       </div>
 
       {baselinePlan && simulatedPlan && (
         <PlanComparison baseline={baselinePlan} simulated={simulatedPlan} />
       )}
 
-      <div className="mt-6">
-        <TeamLoadChart reports={[]} title="Simulated Team Load" />
-      </div>
+      {baselinePlan && !simulatedPlan && (
+        <div className="mt-6 text-sm text-gray-500">
+          Baseline plan loaded. Adjust parameters and run again to compare.
+        </div>
+      )}
+
+      {!baselinePlan && (
+        <div className="mt-6 text-sm text-gray-400 italic">
+          Run a simulation to see team load comparison
+        </div>
+      )}
     </div>
   );
 }

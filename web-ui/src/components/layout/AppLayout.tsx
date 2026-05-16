@@ -1,4 +1,4 @@
-import { Outlet, NavLink, useLocation } from 'react-router-dom';
+import { Outlet, NavLink } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
 import type { RootState } from '../../store';
 import { toggleSidebar } from '../../store/uiSlice';
@@ -16,7 +16,6 @@ const navItems = [
 export function AppLayout() {
   const dispatch = useDispatch();
   const sidebarOpen = useSelector((state: RootState) => state.ui.sidebarOpen);
-  const location = useLocation();
 
   return (
     <div className="min-h-screen bg-gray-50 flex">

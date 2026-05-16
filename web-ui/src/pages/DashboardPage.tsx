@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
-import { dashboardApi, type DashboardMetrics } from '../../api/dashboard';
-import { TeamLoadChart } from '../../components/planning/TeamLoadChart';
-import { ConflictList } from '../../components/planning/ConflictList';
-import { Loading } from '../../components/common/Loading';
+import { dashboardApi, type DashboardMetrics } from '../api/dashboard';
+import { TeamLoadChart } from '../components/planning/TeamLoadChart';
+import { ConflictList } from '../components/planning/ConflictList';
+import { Loading } from '../components/common/Loading';
 
 interface MetricCardProps {
   title: string;

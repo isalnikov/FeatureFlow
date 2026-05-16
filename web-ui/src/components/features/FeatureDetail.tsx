@@ -6,6 +6,7 @@ interface FeatureDetailProps {
   feature: Feature;
   onClose: () => void;
   onEdit?: () => void;
+  onDelete?: () => void;
 }
 
 const classOfServiceLabels: Record<ClassOfService, string> = {
@@ -22,7 +23,7 @@ const classOfServiceVariants: Record<ClassOfService, 'error' | 'warning' | 'defa
   FILLER: 'info',
 };
 
-export function FeatureDetail({ feature, onClose, onEdit }: FeatureDetailProps) {
+export function FeatureDetail({ feature, onClose, onEdit, onDelete }: FeatureDetailProps) {
   const totalEffort =
     feature.effortEstimate.backendHours +
     feature.effortEstimate.frontendHours +
@@ -42,6 +43,11 @@ export function FeatureDetail({ feature, onClose, onEdit }: FeatureDetailProps) 
           {onEdit && (
             <Button variant="ghost" size="sm" onClick={onEdit}>
               Edit
+            </Button>
+          )}
+          {onDelete && (
+            <Button variant="danger" size="sm" onClick={onDelete}>
+              Delete
             </Button>
           )}
           <button onClick={onClose} className="text-gray-400 hover:text-gray-600">

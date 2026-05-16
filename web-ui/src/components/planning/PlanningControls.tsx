@@ -36,8 +36,8 @@ export function PlanningControls({ featureIds, planningWindowId, onPlanningCompl
 
   useEffect(() => {
     if (status) {
-      setProgress(status.progressPercent || 0);
-      setPhase(status.phase || null);
+      setProgress(status.progressPercent);
+      setPhase(status.phase);
 
       if (status.phase === 'DONE') {
         setIsPlanning(false);

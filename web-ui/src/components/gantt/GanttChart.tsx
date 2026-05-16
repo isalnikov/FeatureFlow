@@ -91,8 +91,20 @@ export function GanttChart({
       const dropX = e.clientX - rect.left + e.currentTarget.scrollLeft;
       const dayOffset = Math.floor((dropX - 256) / dayWidth);
       const dropDate = addDays(startDate, Math.max(0, dayOffset));
-      const sprintId = format(dropDate, 'yyyy-MM-dd');
-      onDragEnd(featureId, sprintId);
+
+      const sprints = planningResult?.sprints || [];
+      const targetSprint = sprints.find((s) => {
+        const sStart = new Date(s.startDate);
+        const sEnd = new Date(s.endDate);
+        return dropDate >= sStart && dropDate <= sEnd;
+      });
+
+      if (!targetSprint) {
+        console.warn('No sprint found for dropped date:', dropDate);
+        return;
+      }
+
+      onDragEnd(featureId, targetSprint.id);
     }
     setDraggedFeature(null);
   };

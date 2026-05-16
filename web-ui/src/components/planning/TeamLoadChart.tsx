@@ -1,9 +1,8 @@
-import { BarChart, Bar, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer, Cell } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import type { TeamLoadReport } from '../../types';
 
 interface TeamLoadChartProps {
   reports: TeamLoadReport[];
-  sprintLabels?: string[];
   title?: string;
 }
 
@@ -27,7 +26,7 @@ function getLoadColor(utilization: number): string {
   return '#ef4444';
 }
 
-export function TeamLoadChart({ reports, sprintLabels, title = 'Team Load' }: TeamLoadChartProps) {
+export function TeamLoadChart({ reports, title = 'Team Load' }: TeamLoadChartProps) {
   if (reports.length === 0) {
     return (
       <div className="flex items-center justify-center py-8 text-gray-400">

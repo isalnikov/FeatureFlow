@@ -30,6 +30,8 @@ export function SettingsPage() {
   const [saveStatus, setSaveStatus] = useState<string | null>(null);
   const [testStatus, setTestStatus] = useState<Record<string, string>>({});
   const [testing, setTesting] = useState<Record<string, boolean>>({});
+  const [importing, setImporting] = useState(false);
+  const [importResult, setImportResult] = useState<string | null>(null);
 
   const handleSavePlanning = () => {
     localStorage.setItem('featureflow_planning_params', JSON.stringify(planningParams));
@@ -65,6 +67,24 @@ export function SettingsPage() {
       }));
     } finally {
       setTesting((prev) => ({ ...prev, [type]: false }));
+    }
+  };
+
+  const handleImport = async (type: 'jira' | 'ado' | 'linear') => {
+    try {
+      setImporting(true);
+      setImportResult(null);
+      const config = type === 'jira'
+        ? { baseUrl: integrationConfig.jiraUrl, authType: 'basic' as const, username: integrationConfig.jiraUsername, apiToken: integrationConfig.jiraToken }
+        : type === 'ado'
+          ? { baseUrl: integrationConfig.adoUrl, authType: 'token' as const, apiToken: integrationConfig.adoToken }
+          : { authType: 'token' as const, apiToken: '' };
+      const result = await integrationsApi.import(type, config, {});
+      setImportResult(`Imported ${result.itemsImported} items from ${type}`);
+    } catch (error) {
+      setImportResult(`Import failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    } finally {
+      setImporting(false);
     }
   };
 
@@ -275,6 +295,26 @@ export function SettingsPage() {
                 </div>
               </div>
             </div>
+          </div>
+        </div>
+
+        <div className="bg-white rounded-lg border border-gray-200 p-6">
+          <h2 className="text-lg font-semibold text-gray-900 mb-4">Import / Export</h2>
+          <div className="flex items-center gap-3 flex-wrap">
+            <Button variant="secondary" size="sm" onClick={() => handleImport('jira')} loading={importing}>
+              Import from Jira
+            </Button>
+            <Button variant="secondary" size="sm" onClick={() => handleImport('ado')} loading={importing}>
+              Import from ADO
+            </Button>
+            <Button variant="secondary" size="sm" onClick={() => handleImport('linear')} loading={importing}>
+              Import from Linear
+            </Button>
+            {importResult && (
+              <span className={`text-sm ${importResult.includes('failed') ? 'text-red-600' : 'text-green-600'}`}>
+                {importResult}
+              </span>
+            )}
           </div>
         </div>
       </div>

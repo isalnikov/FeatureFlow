@@ -33,13 +33,11 @@ const statusBorderColors: Record<string, string> = {
 export function GanttBar({
   feature,
   timeline,
-  assignments,
   isDragged,
   onDragStart,
   onDragEnd,
   onClick,
   dayWidth,
-  totalDays,
   startDate,
 }: GanttBarProps) {
   const [isDragging, setIsDragging] = useState(false);

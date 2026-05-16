@@ -14,8 +14,9 @@ export const featuresApi = {
   },
 
   listAll: async () => {
-    const response = await apiClient.get<Feature[]>('/features', { params: { size: 1000 } });
-    return response.data.content || response.data;
+    const response = await apiClient.get<Feature[] | PaginatedFeatures>('/features', { params: { size: 1000 } });
+    const data = response.data;
+    return Array.isArray(data) ? data : (data.content || []);
   },
 
   getById: async (id: string) => {

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { dashboardApi, type TimelineEntry } from '../../api/dashboard';
+import { dashboardApi, type TimelineEntry } from '../api/dashboard';
 import { Badge } from '../components/common/Badge';
 import { Loading } from '../components/common/Loading';
 
@@ -20,7 +20,7 @@ export function PortfolioPage() {
     dashboardApi
       .getTimeline()
       .then(setTimeline)
-      .catch((err) => {
+      .catch((err: unknown) => {
         const message = err instanceof Error ? err.message : 'Failed to load portfolio';
         setError(message);
       })
@@ -38,7 +38,7 @@ export function PortfolioPage() {
             onClick={() => {
               setError(null);
               setLoading(true);
-              dashboardApi.getTimeline().then(setTimeline).catch((err) => setError(err.message)).finally(() => setLoading(false));
+              dashboardApi.getTimeline().then(setTimeline).catch((err: unknown) => setError(err instanceof Error ? err.message : 'Failed')).finally(() => setLoading(false));
             }}
             className="mt-3 text-sm font-medium text-red-600 hover:text-red-800 underline"
           >

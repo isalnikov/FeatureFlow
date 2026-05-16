@@ -1,13 +1,25 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState } from 'react';
 
-export function useSSE(url: string | null) {
-  const [status, setStatus] = useState<Record<string, unknown> | null>(null);
+export interface SSEStatus {
+  jobId: string;
+  phase: string;
+  progressPercent: number;
+  currentCost: number;
+  bestCost: number;
+  iteration: number;
+}
+
+export function useSSE(url: string | null, service: 'data' | 'planning' = 'data') {
+  const [status, setStatus] = useState<SSEStatus | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!url) return;
 
-    const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:8080';
+    const baseUrl = service === 'planning'
+      ? import.meta.env.VITE_PLANNING_ENGINE_URL || 'http://localhost:8081'
+      : import.meta.env.VITE_API_URL || 'http://localhost:8080';
+
     const eventSource = new EventSource(`${baseUrl}${url}`);
 
     eventSource.onmessage = (event) => {
@@ -24,7 +36,7 @@ export function useSSE(url: string | null) {
     };
 
     return () => eventSource.close();
-  }, [url]);
+  }, [url, service]);
 
   return { status, error };
 }

@@ -48,7 +48,6 @@ export function SprintTable({ sprints, assignments, features, teams }: SprintTab
         <tbody className="bg-white divide-y divide-gray-200">
           {sprints.map((sprint) => {
             const sprintAssignments = assignmentsBySprint[sprint.id] || [];
-            const uniqueFeatures = new Set(sprintAssignments.map((a) => a.featureId));
             const uniqueTeams = new Set(sprintAssignments.map((a) => a.teamId));
 
             return (

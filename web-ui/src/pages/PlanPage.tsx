@@ -1,7 +1,8 @@
 import { useState } from 'react';
-import { useSelector, useDispatch } from 'react-redux';
+import { useSelector } from 'react-redux';
 import type { RootState } from '../store';
-import { setSelectedFeature, setShowCreateFeatureModal } from '../store/uiSlice';
+import { useAppDispatch } from '../store';
+import { setSelectedFeature } from '../store/uiSlice';
 import { useFeatures } from '../hooks/useFeatures';
 import { useAssignments } from '../hooks/usePlanning';
 import { runPlanning } from '../store/planningSlice';
@@ -16,7 +17,7 @@ import { Modal } from '../components/common/Modal';
 import { Loading } from '../components/common/Loading';
 
 export function PlanPage() {
-  const dispatch = useDispatch();
+  const dispatch = useAppDispatch();
   const selectedFeatureId = useSelector((state: RootState) => state.ui.selectedFeatureId);
   const planningState = useSelector((state: RootState) => state.planning);
 

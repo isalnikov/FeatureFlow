@@ -58,6 +58,17 @@ export function FeaturesPage() {
     }
   };
 
+  const handleDelete = async (id: string) => {
+    if (!confirm('Delete this feature?')) return;
+    try {
+      await featuresApi.delete(id);
+      if (selectedFeature?.id === id) setSelectedFeature(null);
+      refetch();
+    } catch (err) {
+      console.error('Failed to delete feature:', err);
+    }
+  };
+
   if (loading) return <Loading fullScreen label="Loading features..." />;
   if (error) return <div className="text-red-600 p-4">{error}</div>;
 
@@ -77,6 +88,7 @@ export function FeaturesPage() {
             feature={selectedFeature}
             onClose={() => setSelectedFeature(null)}
             onEdit={() => setShowEditModal(true)}
+            onDelete={() => handleDelete(selectedFeature.id)}
           />
         )}
         <DependencyGraph

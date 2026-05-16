@@ -5,13 +5,13 @@ import { Button } from '../common/Button';
 interface FeatureFormProps {
   feature?: Feature | null;
   products: Product[];
-  teams: Team[];
+  teams?: Team[];
   onSubmit: (data: CreateFeatureRequest) => void;
   onCancel: () => void;
   loading?: boolean;
 }
 
-export function FeatureForm({ feature, products, teams, onSubmit, onCancel, loading }: FeatureFormProps) {
+export function FeatureForm({ feature, products, onSubmit, onCancel, loading }: FeatureFormProps) {
   const [title, setTitle] = useState(feature?.title || '');
   const [description, setDescription] = useState(feature?.description || '');
   const [businessValue, setBusinessValue] = useState(feature?.businessValue || 50);

@@ -1,14 +1,13 @@
-import { format, eachDayOfInterval, addDays } from 'date-fns';
+import { format, eachDayOfInterval } from 'date-fns';
 import { GanttZoomLevel } from '../../store/uiSlice';
 
 interface GanttTimelineProps {
   startDate: Date;
   endDate: Date;
   zoom: GanttZoomLevel;
-  sprintLabels?: string[];
 }
 
-export function GanttTimeline({ startDate, endDate, zoom, sprintLabels }: GanttTimelineProps) {
+export function GanttTimeline({ startDate, endDate, zoom }: GanttTimelineProps) {
   const days = eachDayOfInterval({ start: startDate, end: endDate });
 
   const getHeaderLabel = (date: Date) => {
