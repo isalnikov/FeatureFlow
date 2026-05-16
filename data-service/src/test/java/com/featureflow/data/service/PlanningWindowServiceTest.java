@@ -49,11 +49,13 @@ class PlanningWindowServiceTest {
         windowEntity.setEndDate(LocalDate.of(2025, 6, 30));
         windowEntity.setVersion(1);
 
-        windowDto = new PlanningWindowDto();
-        windowDto.setId(windowId);
-        windowDto.setStartDate(LocalDate.of(2025, 1, 1));
-        windowDto.setEndDate(LocalDate.of(2025, 6, 30));
-        windowDto.setVersion(1);
+        windowDto = new PlanningWindowDto(
+            windowId,
+            LocalDate.of(2025, 1, 1),
+            LocalDate.of(2025, 6, 30),
+            1,
+            null
+        );
     }
 
     @Test
@@ -64,7 +66,7 @@ class PlanningWindowServiceTest {
         List<PlanningWindowDto> result = planningWindowService.listAll();
 
         assertThat(result).hasSize(1);
-        assertThat(result.get(0).getId()).isEqualTo(windowId);
+        assertThat(result.get(0).id()).isEqualTo(windowId);
     }
 
     @Test
@@ -74,7 +76,7 @@ class PlanningWindowServiceTest {
 
         PlanningWindowDto result = planningWindowService.getById(windowId);
 
-        assertThat(result.getId()).isEqualTo(windowId);
+        assertThat(result.id()).isEqualTo(windowId);
     }
 
     @Test
@@ -88,9 +90,7 @@ class PlanningWindowServiceTest {
 
     @Test
     void create_shouldSaveAndReturnDto() {
-        CreatePlanningWindowRequest request = new CreatePlanningWindowRequest();
-        request.setStartDate(LocalDate.of(2025, 7, 1));
-        request.setEndDate(LocalDate.of(2025, 12, 31));
+        CreatePlanningWindowRequest request = new CreatePlanningWindowRequest(LocalDate.of(2025, 7, 1), LocalDate.of(2025, 12, 31));
 
         when(mapper.toPlanningWindowEntity(request)).thenReturn(windowEntity);
         when(planningWindowRepository.save(windowEntity)).thenReturn(windowEntity);
@@ -121,19 +121,21 @@ class PlanningWindowServiceTest {
 
     @Test
     void addSprint_shouldSaveAndReturnSprintDto() {
-        CreateSprintRequest request = new CreateSprintRequest();
-        request.setStartDate(LocalDate.of(2025, 1, 1));
-        request.setEndDate(LocalDate.of(2025, 1, 14));
+        CreateSprintRequest request = new CreateSprintRequest(LocalDate.of(2025, 1, 1), LocalDate.of(2025, 1, 14), Map.of(), null);
 
         SprintEntity sprintEntity = new SprintEntity();
         sprintEntity.setId(UUID.randomUUID());
         sprintEntity.setStartDate(LocalDate.of(2025, 1, 1));
         sprintEntity.setEndDate(LocalDate.of(2025, 1, 14));
 
-        SprintDto sprintDto = new SprintDto();
-        sprintDto.setId(sprintEntity.getId());
-        sprintDto.setStartDate(LocalDate.of(2025, 1, 1));
-        sprintDto.setEndDate(LocalDate.of(2025, 1, 14));
+        SprintDto sprintDto = new SprintDto(
+            sprintEntity.getId(),
+            null,
+            LocalDate.of(2025, 1, 1),
+            LocalDate.of(2025, 1, 14),
+            null,
+            null
+        );
 
         when(planningWindowRepository.findById(windowId)).thenReturn(Optional.of(windowEntity));
         when(mapper.toSprintEntity(request, windowEntity)).thenReturn(sprintEntity);
@@ -142,13 +144,13 @@ class PlanningWindowServiceTest {
 
         SprintDto result = planningWindowService.addSprint(windowId, request);
 
-        assertThat(result.getId()).isEqualTo(sprintEntity.getId());
+        assertThat(result.id()).isEqualTo(sprintEntity.getId());
         verify(sprintRepository).save(sprintEntity);
     }
 
     @Test
     void addSprint_windowNotFound_shouldThrow() {
-        CreateSprintRequest request = new CreateSprintRequest();
+        CreateSprintRequest request = new CreateSprintRequest(LocalDate.of(2025, 1, 1), LocalDate.of(2025, 1, 14), Map.of(), null);
         when(planningWindowRepository.findById(windowId)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> planningWindowService.addSprint(windowId, request))
@@ -195,10 +197,14 @@ class PlanningWindowServiceTest {
         sprintEntity.setStartDate(LocalDate.of(2025, 1, 1));
         sprintEntity.setEndDate(LocalDate.of(2025, 1, 14));
 
-        SprintDto sprintDto = new SprintDto();
-        sprintDto.setId(sprintEntity.getId());
-        sprintDto.setStartDate(LocalDate.of(2025, 1, 1));
-        sprintDto.setEndDate(LocalDate.of(2025, 1, 14));
+        SprintDto sprintDto = new SprintDto(
+            sprintEntity.getId(),
+            null,
+            LocalDate.of(2025, 1, 1),
+            LocalDate.of(2025, 1, 14),
+            null,
+            null
+        );
 
         when(planningWindowRepository.existsById(windowId)).thenReturn(true);
         when(sprintRepository.findByPlanningWindowId(windowId)).thenReturn(List.of(sprintEntity));
@@ -207,7 +213,7 @@ class PlanningWindowServiceTest {
         List<SprintDto> result = planningWindowService.getSprints(windowId);
 
         assertThat(result).hasSize(1);
-        assertThat(result.get(0).getId()).isEqualTo(sprintEntity.getId());
+        assertThat(result.get(0).id()).isEqualTo(sprintEntity.getId());
     }
 
     @Test

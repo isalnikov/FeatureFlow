@@ -15,6 +15,7 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 import static org.mockito.ArgumentMatchers.any;
@@ -40,10 +41,14 @@ class SprintControllerTest {
     @Test
     void list_withPlanningWindowId_shouldReturnSprints() throws Exception {
         UUID pwId = UUID.randomUUID();
-        SprintDto dto = new SprintDto();
-        dto.setId(UUID.randomUUID());
-        dto.setStartDate(LocalDate.of(2025, 1, 1));
-        dto.setEndDate(LocalDate.of(2025, 1, 14));
+        SprintDto dto = new SprintDto(
+            UUID.randomUUID(),
+            null,
+            LocalDate.of(2025, 1, 1),
+            LocalDate.of(2025, 1, 14),
+            null,
+            null
+        );
 
         when(sprintService.listByPlanningWindow(pwId)).thenReturn(List.of(dto));
 
@@ -56,10 +61,14 @@ class SprintControllerTest {
     @Test
     void get_shouldReturnSprint() throws Exception {
         UUID id = UUID.randomUUID();
-        SprintDto dto = new SprintDto();
-        dto.setId(id);
-        dto.setStartDate(LocalDate.of(2025, 1, 1));
-        dto.setEndDate(LocalDate.of(2025, 1, 14));
+        SprintDto dto = new SprintDto(
+            id,
+            null,
+            LocalDate.of(2025, 1, 1),
+            LocalDate.of(2025, 1, 14),
+            null,
+            null
+        );
 
         when(sprintService.getById(id)).thenReturn(dto);
 
@@ -71,16 +80,16 @@ class SprintControllerTest {
     @Test
     void create_shouldReturnCreated() throws Exception {
         UUID pwId = UUID.randomUUID();
-        CreateSprintRequest request = new CreateSprintRequest();
-        request.setStartDate(LocalDate.of(2025, 2, 1));
-        request.setEndDate(LocalDate.of(2025, 2, 14));
-        request.setExternalId("SPR-1");
+        CreateSprintRequest request = new CreateSprintRequest(LocalDate.of(2025, 2, 1), LocalDate.of(2025, 2, 14), Map.of(), "SPR-1");
 
-        SprintDto dto = new SprintDto();
-        dto.setId(UUID.randomUUID());
-        dto.setPlanningWindowId(pwId);
-        dto.setStartDate(LocalDate.of(2025, 2, 1));
-        dto.setEndDate(LocalDate.of(2025, 2, 14));
+        SprintDto dto = new SprintDto(
+            UUID.randomUUID(),
+            pwId,
+            LocalDate.of(2025, 2, 1),
+            LocalDate.of(2025, 2, 14),
+            null,
+            null
+        );
 
         when(sprintService.create(eq(pwId), any(CreateSprintRequest.class))).thenReturn(dto);
 
@@ -95,12 +104,16 @@ class SprintControllerTest {
     @Test
     void update_shouldReturnUpdated() throws Exception {
         UUID id = UUID.randomUUID();
-        UpdateSprintRequest request = new UpdateSprintRequest();
-        request.setEndDate(LocalDate.of(2025, 1, 21));
+        UpdateSprintRequest request = new UpdateSprintRequest(null, LocalDate.of(2025, 1, 21), null, null);
 
-        SprintDto dto = new SprintDto();
-        dto.setId(id);
-        dto.setEndDate(LocalDate.of(2025, 1, 21));
+        SprintDto dto = new SprintDto(
+            id,
+            null,
+            null,
+            LocalDate.of(2025, 1, 21),
+            null,
+            null
+        );
 
         when(sprintService.update(eq(id), any(UpdateSprintRequest.class))).thenReturn(dto);
 

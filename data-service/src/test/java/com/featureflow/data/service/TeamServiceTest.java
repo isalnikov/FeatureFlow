@@ -52,15 +52,18 @@ class TeamServiceTest {
         teamEntity.setExpertiseTags(new HashSet<>(List.of("java", "react")));
         teamEntity.setVersion(1);
 
-        teamDto = new TeamDto();
-        teamDto.setId(teamId);
-        teamDto.setName("Alpha Team");
-        teamDto.setFocusFactor(0.7);
-        teamDto.setBugReservePercent(0.20);
-        teamDto.setTechDebtReservePercent(0.10);
-        teamDto.setVelocity(50.0);
-        teamDto.setExpertiseTags(new HashSet<>(List.of("java", "react")));
-        teamDto.setVersion(1);
+        teamDto = new TeamDto(
+            teamId,
+            "Alpha Team",
+            0.7,
+            0.20,
+            0.10,
+            50.0,
+            new HashSet<>(List.of("java", "react")),
+            null,
+            1,
+            null, null, null, null
+        );
     }
 
     @Test
@@ -71,7 +74,7 @@ class TeamServiceTest {
         List<TeamDto> result = teamService.listAll();
 
         assertThat(result).hasSize(1);
-        assertThat(result.get(0).getName()).isEqualTo("Alpha Team");
+        assertThat(result.get(0).name()).isEqualTo("Alpha Team");
     }
 
     @Test
@@ -81,7 +84,7 @@ class TeamServiceTest {
 
         TeamDto result = teamService.getById(teamId);
 
-        assertThat(result.getId()).isEqualTo(teamId);
+        assertThat(result.id()).isEqualTo(teamId);
     }
 
     @Test
@@ -95,9 +98,7 @@ class TeamServiceTest {
 
     @Test
     void create_shouldSaveAndReturnDto() {
-        CreateTeamRequest request = new CreateTeamRequest();
-        request.setName("New Team");
-        request.setFocusFactor(0.8);
+        CreateTeamRequest request = new CreateTeamRequest("New Team", 0.8, null, null, null, null);
 
         when(mapper.toTeamEntity(request)).thenReturn(teamEntity);
         when(teamRepository.save(teamEntity)).thenReturn(teamEntity);
@@ -111,9 +112,7 @@ class TeamServiceTest {
 
     @Test
     void update_shouldModifyAndReturnDto() {
-        UpdateTeamRequest request = new UpdateTeamRequest();
-        request.setName("Updated Team");
-        request.setFocusFactor(0.85);
+        UpdateTeamRequest request = new UpdateTeamRequest("Updated Team", 0.85, null, null, null, null);
 
         when(teamRepository.findById(teamId)).thenReturn(Optional.of(teamEntity));
         when(teamRepository.save(teamEntity)).thenReturn(teamEntity);
@@ -128,7 +127,7 @@ class TeamServiceTest {
 
     @Test
     void update_notFound_shouldThrow() {
-        UpdateTeamRequest request = new UpdateTeamRequest();
+        UpdateTeamRequest request = new UpdateTeamRequest(null, null, null, null, null, null);
         when(teamRepository.findById(teamId)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> teamService.update(teamId, request))

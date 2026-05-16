@@ -40,14 +40,20 @@ class PlanningWindowControllerTest {
 
         mockMvc.perform(get("/api/v1/planning-windows"))
             .andExpect(status().isOk())
-            .andExpect(jsonPath("$[0].id").value(dto.getId().toString()));
+            .andExpect(jsonPath("$[0].id").value(dto.id().toString()));
     }
 
     @Test
     void get_shouldReturnWindow() throws Exception {
         UUID id = UUID.randomUUID();
         PlanningWindowDto dto = planningWindowDto();
-        dto.setId(id);
+        dto = new PlanningWindowDto(
+            id,
+            dto.startDate(),
+            dto.endDate(),
+            dto.version(),
+            dto.createdAt()
+        );
         when(service.getById(id)).thenReturn(dto);
 
         mockMvc.perform(get("/api/v1/planning-windows/{id}", id))
@@ -66,9 +72,7 @@ class PlanningWindowControllerTest {
 
     @Test
     void create_shouldReturn201() throws Exception {
-        CreatePlanningWindowRequest request = new CreatePlanningWindowRequest();
-        request.setStartDate(LocalDate.of(2025, 1, 1));
-        request.setEndDate(LocalDate.of(2025, 6, 30));
+        CreatePlanningWindowRequest request = new CreatePlanningWindowRequest(LocalDate.of(2025, 1, 1), LocalDate.of(2025, 6, 30));
 
         PlanningWindowDto dto = planningWindowDto();
         when(service.create(any())).thenReturn(dto);
@@ -77,7 +81,7 @@ class PlanningWindowControllerTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request)))
             .andExpect(status().isCreated())
-            .andExpect(jsonPath("$.id").value(dto.getId().toString()));
+            .andExpect(jsonPath("$.id").value(dto.id().toString()));
     }
 
     @Test
@@ -106,7 +110,7 @@ class PlanningWindowControllerTest {
 
         mockMvc.perform(get("/api/v1/planning-windows/{id}/sprints", id))
             .andExpect(status().isOk())
-            .andExpect(jsonPath("$[0].id").value(sprintDto.getId().toString()));
+            .andExpect(jsonPath("$[0].id").value(sprintDto.id().toString()));
     }
 
     @Test
@@ -121,9 +125,7 @@ class PlanningWindowControllerTest {
     @Test
     void addSprint_shouldReturn201() throws Exception {
         UUID id = UUID.randomUUID();
-        CreateSprintRequest request = new CreateSprintRequest();
-        request.setStartDate(LocalDate.of(2025, 1, 1));
-        request.setEndDate(LocalDate.of(2025, 1, 14));
+        CreateSprintRequest request = new CreateSprintRequest(LocalDate.of(2025, 1, 1), LocalDate.of(2025, 1, 14), Map.of(), null);
 
         SprintDto sprintDto = sprintDto();
         when(service.addSprint(eq(id), any())).thenReturn(sprintDto);
@@ -132,13 +134,13 @@ class PlanningWindowControllerTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request)))
             .andExpect(status().isCreated())
-            .andExpect(jsonPath("$.id").value(sprintDto.getId().toString()));
+            .andExpect(jsonPath("$.id").value(sprintDto.id().toString()));
     }
 
     @Test
     void addSprint_notFound_shouldReturn404() throws Exception {
         UUID id = UUID.randomUUID();
-        CreateSprintRequest request = new CreateSprintRequest();
+        CreateSprintRequest request = new CreateSprintRequest(LocalDate.of(2025, 1, 1), LocalDate.of(2025, 1, 14), Map.of(), null);
         when(service.addSprint(eq(id), any())).thenThrow(new jakarta.persistence.EntityNotFoundException("Not found"));
 
         mockMvc.perform(post("/api/v1/planning-windows/{id}/sprints", id)
@@ -148,20 +150,23 @@ class PlanningWindowControllerTest {
     }
 
     private PlanningWindowDto planningWindowDto() {
-        PlanningWindowDto dto = new PlanningWindowDto();
-        dto.setId(UUID.randomUUID());
-        dto.setStartDate(LocalDate.of(2025, 1, 1));
-        dto.setEndDate(LocalDate.of(2025, 6, 30));
-        dto.setVersion(1);
-        dto.setCreatedAt(Instant.now());
-        return dto;
+        return new PlanningWindowDto(
+            UUID.randomUUID(),
+            LocalDate.of(2025, 1, 1),
+            LocalDate.of(2025, 6, 30),
+            1,
+            Instant.now()
+        );
     }
 
     private SprintDto sprintDto() {
-        SprintDto dto = new SprintDto();
-        dto.setId(UUID.randomUUID());
-        dto.setStartDate(LocalDate.of(2025, 1, 1));
-        dto.setEndDate(LocalDate.of(2025, 1, 14));
-        return dto;
+        return new SprintDto(
+            UUID.randomUUID(),
+            null,
+            LocalDate.of(2025, 1, 1),
+            LocalDate.of(2025, 1, 14),
+            null,
+            null
+        );
     }
 }

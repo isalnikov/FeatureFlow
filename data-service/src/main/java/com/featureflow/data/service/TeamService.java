@@ -57,23 +57,23 @@ public class TeamService {
     public TeamDto update(UUID id, UpdateTeamRequest request) {
         TeamEntity entity = teamRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Team not found with id: " + id));
-        if (request.getName() != null) {
-            entity.setName(request.getName());
+        if (request.name() != null) {
+            entity.setName(request.name());
         }
-        if (request.getFocusFactor() != null) {
-            entity.setFocusFactor(request.getFocusFactor());
+        if (request.focusFactor() != null) {
+            entity.setFocusFactor(request.focusFactor());
         }
-        if (request.getBugReservePercent() != null) {
-            entity.setBugReservePercent(request.getBugReservePercent());
+        if (request.bugReservePercent() != null) {
+            entity.setBugReservePercent(request.bugReservePercent());
         }
-        if (request.getTechDebtReservePercent() != null) {
-            entity.setTechDebtReservePercent(request.getTechDebtReservePercent());
+        if (request.techDebtReservePercent() != null) {
+            entity.setTechDebtReservePercent(request.techDebtReservePercent());
         }
-        if (request.getVelocity() != null) {
-            entity.setVelocity(request.getVelocity());
+        if (request.velocity() != null) {
+            entity.setVelocity(request.velocity());
         }
-        if (request.getExpertiseTags() != null) {
-            entity.setExpertiseTags(request.getExpertiseTags());
+        if (request.expertiseTags() != null) {
+            entity.setExpertiseTags(request.expertiseTags());
         }
         entity = teamRepository.save(entity);
         return mapper.toTeamDto(entity);

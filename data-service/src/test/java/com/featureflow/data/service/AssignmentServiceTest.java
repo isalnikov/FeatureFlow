@@ -70,12 +70,15 @@ class AssignmentServiceTest {
         assignmentEntity.setSprint(sprintEntity);
         assignmentEntity.setStatus(AssignmentStatus.PLANNED);
 
-        assignmentDto = new AssignmentDto();
-        assignmentDto.setId(assignmentId);
-        assignmentDto.setFeatureId(featureEntity.getId());
-        assignmentDto.setTeamId(teamEntity.getId());
-        assignmentDto.setSprintId(sprintEntity.getId());
-        assignmentDto.setStatus(AssignmentStatus.PLANNED);
+        assignmentDto = new AssignmentDto(
+            assignmentId,
+            featureEntity.getId(),
+            teamEntity.getId(),
+            sprintEntity.getId(),
+            null,
+            AssignmentStatus.PLANNED,
+            null, null, null
+        );
     }
 
     @Test
@@ -86,7 +89,7 @@ class AssignmentServiceTest {
         List<AssignmentDto> result = assignmentService.listAll();
 
         assertThat(result).hasSize(1);
-        assertThat(result.get(0).getId()).isEqualTo(assignmentId);
+        assertThat(result.get(0).id()).isEqualTo(assignmentId);
     }
 
     @Test
@@ -128,7 +131,7 @@ class AssignmentServiceTest {
 
         AssignmentDto result = assignmentService.getById(assignmentId);
 
-        assertThat(result.getId()).isEqualTo(assignmentId);
+        assertThat(result.id()).isEqualTo(assignmentId);
     }
 
     @Test
@@ -141,14 +144,13 @@ class AssignmentServiceTest {
 
     @Test
     void create_shouldSaveAndReturnDto() {
-        CreateAssignmentRequest request = new CreateAssignmentRequest();
-        request.setFeatureId(featureEntity.getId());
-        request.setTeamId(teamEntity.getId());
-        request.setSprintId(sprintEntity.getId());
+        CreateAssignmentRequest request = new CreateAssignmentRequest(
+            featureEntity.getId(), teamEntity.getId(), sprintEntity.getId(), null
+        );
 
-        when(featureRepository.findById(request.getFeatureId())).thenReturn(Optional.of(featureEntity));
-        when(teamRepository.findById(request.getTeamId())).thenReturn(Optional.of(teamEntity));
-        when(sprintRepository.findById(request.getSprintId())).thenReturn(Optional.of(sprintEntity));
+        when(featureRepository.findById(request.featureId())).thenReturn(Optional.of(featureEntity));
+        when(teamRepository.findById(request.teamId())).thenReturn(Optional.of(teamEntity));
+        when(sprintRepository.findById(request.sprintId())).thenReturn(Optional.of(sprintEntity));
         when(mapper.toAssignmentEntity(request, featureEntity, teamEntity, sprintEntity)).thenReturn(assignmentEntity);
         when(assignmentRepository.save(assignmentEntity)).thenReturn(assignmentEntity);
         when(mapper.toAssignmentDto(assignmentEntity)).thenReturn(assignmentDto);
@@ -161,8 +163,7 @@ class AssignmentServiceTest {
 
     @Test
     void create_featureNotFound_shouldThrow() {
-        CreateAssignmentRequest request = new CreateAssignmentRequest();
-        request.setFeatureId(UUID.randomUUID());
+        CreateAssignmentRequest request = new CreateAssignmentRequest(UUID.randomUUID(), null, null, null);
         when(featureRepository.findById(any())).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> assignmentService.create(request))
@@ -171,8 +172,7 @@ class AssignmentServiceTest {
 
     @Test
     void update_shouldModifyAndReturnDto() {
-        UpdateAssignmentRequest request = new UpdateAssignmentRequest();
-        request.setAllocatedEffort(Map.of("backendHours", 40.0));
+        UpdateAssignmentRequest request = new UpdateAssignmentRequest(Map.of("backendHours", 40.0));
 
         when(assignmentRepository.findById(assignmentId)).thenReturn(Optional.of(assignmentEntity));
         when(assignmentRepository.save(assignmentEntity)).thenReturn(assignmentEntity);
@@ -226,14 +226,13 @@ class AssignmentServiceTest {
 
     @Test
     void bulkCreate_shouldSaveAllAndReturnDtos() {
-        CreateAssignmentRequest req = new CreateAssignmentRequest();
-        req.setFeatureId(featureEntity.getId());
-        req.setTeamId(teamEntity.getId());
-        req.setSprintId(sprintEntity.getId());
+        CreateAssignmentRequest req = new CreateAssignmentRequest(
+            featureEntity.getId(), teamEntity.getId(), sprintEntity.getId(), null
+        );
 
-        when(featureRepository.findById(req.getFeatureId())).thenReturn(Optional.of(featureEntity));
-        when(teamRepository.findById(req.getTeamId())).thenReturn(Optional.of(teamEntity));
-        when(sprintRepository.findById(req.getSprintId())).thenReturn(Optional.of(sprintEntity));
+        when(featureRepository.findById(req.featureId())).thenReturn(Optional.of(featureEntity));
+        when(teamRepository.findById(req.teamId())).thenReturn(Optional.of(teamEntity));
+        when(sprintRepository.findById(req.sprintId())).thenReturn(Optional.of(sprintEntity));
         when(mapper.toAssignmentEntity(req, featureEntity, teamEntity, sprintEntity)).thenReturn(assignmentEntity);
         when(assignmentRepository.saveAll(any())).thenReturn(List.of(assignmentEntity));
         when(mapper.toAssignmentDto(assignmentEntity)).thenReturn(assignmentDto);

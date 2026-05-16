@@ -66,17 +66,17 @@ public class SprintService {
         SprintEntity entity = sprintRepository.findById(id)
             .orElseThrow(() -> new EntityNotFoundException("Sprint not found with id: " + id));
 
-        if (request.getStartDate() != null) {
-            entity.setStartDate(request.getStartDate());
+        if (request.startDate() != null) {
+            entity.setStartDate(request.startDate());
         }
-        if (request.getEndDate() != null) {
-            entity.setEndDate(request.getEndDate());
+        if (request.endDate() != null) {
+            entity.setEndDate(request.endDate());
         }
-        if (request.getCapacityOverrides() != null) {
-            entity.setCapacityOverrides(request.getCapacityOverrides());
+        if (request.capacityOverrides() != null) {
+            entity.setCapacityOverrides(request.capacityOverrides());
         }
-        if (request.getExternalId() != null) {
-            entity.setExternalId(request.getExternalId());
+        if (request.externalId() != null) {
+            entity.setExternalId(request.externalId());
         }
 
         entity = sprintRepository.save(entity);

@@ -40,7 +40,7 @@ class AssignmentControllerTest {
 
         mockMvc.perform(get("/api/v1/assignments"))
             .andExpect(status().isOk())
-            .andExpect(jsonPath("$[0].id").value(dto.getId().toString()));
+            .andExpect(jsonPath("$[0].id").value(dto.id().toString()));
     }
 
     @Test
@@ -52,7 +52,7 @@ class AssignmentControllerTest {
         mockMvc.perform(get("/api/v1/assignments")
                 .param("teamId", teamId.toString()))
             .andExpect(status().isOk())
-            .andExpect(jsonPath("$[0].id").value(dto.getId().toString()));
+            .andExpect(jsonPath("$[0].id").value(dto.id().toString()));
     }
 
     @Test
@@ -64,7 +64,7 @@ class AssignmentControllerTest {
         mockMvc.perform(get("/api/v1/assignments")
                 .param("sprintId", sprintId.toString()))
             .andExpect(status().isOk())
-            .andExpect(jsonPath("$[0].id").value(dto.getId().toString()));
+            .andExpect(jsonPath("$[0].id").value(dto.id().toString()));
     }
 
     @Test
@@ -75,15 +75,14 @@ class AssignmentControllerTest {
         mockMvc.perform(get("/api/v1/assignments")
                 .param("status", "PLANNED"))
             .andExpect(status().isOk())
-            .andExpect(jsonPath("$[0].id").value(dto.getId().toString()));
+            .andExpect(jsonPath("$[0].id").value(dto.id().toString()));
     }
 
     @Test
     void create_shouldReturn201() throws Exception {
-        CreateAssignmentRequest request = new CreateAssignmentRequest();
-        request.setFeatureId(UUID.randomUUID());
-        request.setTeamId(UUID.randomUUID());
-        request.setSprintId(UUID.randomUUID());
+        CreateAssignmentRequest request = new CreateAssignmentRequest(
+            UUID.randomUUID(), UUID.randomUUID(), UUID.randomUUID(), null
+        );
 
         AssignmentDto dto = assignmentDto();
         when(service.create(any())).thenReturn(dto);
@@ -92,17 +91,25 @@ class AssignmentControllerTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request)))
             .andExpect(status().isCreated())
-            .andExpect(jsonPath("$.id").value(dto.getId().toString()));
+            .andExpect(jsonPath("$.id").value(dto.id().toString()));
     }
 
     @Test
     void update_shouldReturn200() throws Exception {
         UUID id = UUID.randomUUID();
-        UpdateAssignmentRequest request = new UpdateAssignmentRequest();
-        request.setAllocatedEffort(Map.of("backendHours", 40.0));
+        UpdateAssignmentRequest request = new UpdateAssignmentRequest(Map.of("backendHours", 40.0));
 
-        AssignmentDto dto = assignmentDto();
-        dto.setId(id);
+        AssignmentDto dto = new AssignmentDto(
+            id,
+            dto().featureId(),
+            dto().teamId(),
+            dto().sprintId(),
+            dto().allocatedEffort(),
+            dto().status(),
+            dto().version(),
+            dto().createdAt(),
+            dto().updatedAt()
+        );
         when(service.update(eq(id), any())).thenReturn(dto);
 
         mockMvc.perform(put("/api/v1/assignments/{id}", id)
@@ -115,7 +122,7 @@ class AssignmentControllerTest {
     @Test
     void update_notFound_shouldReturn404() throws Exception {
         UUID id = UUID.randomUUID();
-        UpdateAssignmentRequest request = new UpdateAssignmentRequest();
+        UpdateAssignmentRequest request = new UpdateAssignmentRequest(null);
         when(service.update(eq(id), any())).thenThrow(new jakarta.persistence.EntityNotFoundException("Not found"));
 
         mockMvc.perform(put("/api/v1/assignments/{id}", id)
@@ -145,9 +152,17 @@ class AssignmentControllerTest {
     @Test
     void lock_shouldReturn200() throws Exception {
         UUID id = UUID.randomUUID();
-        AssignmentDto dto = assignmentDto();
-        dto.setId(id);
-        dto.setStatus(AssignmentStatus.LOCKED);
+        AssignmentDto dto = new AssignmentDto(
+            id,
+            UUID.randomUUID(),
+            UUID.randomUUID(),
+            UUID.randomUUID(),
+            null,
+            AssignmentStatus.LOCKED,
+            1,
+            Instant.now(),
+            Instant.now()
+        );
         when(service.lock(id)).thenReturn(dto);
 
         mockMvc.perform(put("/api/v1/assignments/{id}/lock", id))
@@ -167,9 +182,17 @@ class AssignmentControllerTest {
     @Test
     void unlock_shouldReturn200() throws Exception {
         UUID id = UUID.randomUUID();
-        AssignmentDto dto = assignmentDto();
-        dto.setId(id);
-        dto.setStatus(AssignmentStatus.PLANNED);
+        AssignmentDto dto = new AssignmentDto(
+            id,
+            UUID.randomUUID(),
+            UUID.randomUUID(),
+            UUID.randomUUID(),
+            null,
+            AssignmentStatus.PLANNED,
+            1,
+            Instant.now(),
+            Instant.now()
+        );
         when(service.unlock(id)).thenReturn(dto);
 
         mockMvc.perform(put("/api/v1/assignments/{id}/unlock", id))
@@ -179,10 +202,9 @@ class AssignmentControllerTest {
 
     @Test
     void bulkCreate_shouldReturn201() throws Exception {
-        CreateAssignmentRequest req = new CreateAssignmentRequest();
-        req.setFeatureId(UUID.randomUUID());
-        req.setTeamId(UUID.randomUUID());
-        req.setSprintId(UUID.randomUUID());
+        CreateAssignmentRequest req = new CreateAssignmentRequest(
+            UUID.randomUUID(), UUID.randomUUID(), UUID.randomUUID(), null
+        );
 
         AssignmentDto dto = assignmentDto();
         when(service.bulkCreate(any())).thenReturn(List.of(dto));
@@ -191,19 +213,24 @@ class AssignmentControllerTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(List.of(req))))
             .andExpect(status().isCreated())
-            .andExpect(jsonPath("$[0].id").value(dto.getId().toString()));
+            .andExpect(jsonPath("$[0].id").value(dto.id().toString()));
     }
 
     private AssignmentDto assignmentDto() {
-        AssignmentDto dto = new AssignmentDto();
-        dto.setId(UUID.randomUUID());
-        dto.setFeatureId(UUID.randomUUID());
-        dto.setTeamId(UUID.randomUUID());
-        dto.setSprintId(UUID.randomUUID());
-        dto.setStatus(AssignmentStatus.PLANNED);
-        dto.setVersion(1);
-        dto.setCreatedAt(Instant.now());
-        dto.setUpdatedAt(Instant.now());
-        return dto;
+        return new AssignmentDto(
+            UUID.randomUUID(),
+            UUID.randomUUID(),
+            UUID.randomUUID(),
+            UUID.randomUUID(),
+            null,
+            AssignmentStatus.PLANNED,
+            1,
+            Instant.now(),
+            Instant.now()
+        );
+    }
+
+    private AssignmentDto dto() {
+        return assignmentDto();
     }
 }

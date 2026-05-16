@@ -75,12 +75,12 @@ public class AssignmentService {
 
     @Transactional
     public AssignmentDto create(CreateAssignmentRequest request) {
-        FeatureEntity feature = featureRepository.findById(request.getFeatureId())
-                .orElseThrow(() -> new EntityNotFoundException("Feature not found with id: " + request.getFeatureId()));
-        TeamEntity team = teamRepository.findById(request.getTeamId())
-                .orElseThrow(() -> new EntityNotFoundException("Team not found with id: " + request.getTeamId()));
-        SprintEntity sprint = sprintRepository.findById(request.getSprintId())
-                .orElseThrow(() -> new EntityNotFoundException("Sprint not found with id: " + request.getSprintId()));
+        FeatureEntity feature = featureRepository.findById(request.featureId())
+                .orElseThrow(() -> new EntityNotFoundException("Feature not found with id: " + request.featureId()));
+        TeamEntity team = teamRepository.findById(request.teamId())
+                .orElseThrow(() -> new EntityNotFoundException("Team not found with id: " + request.teamId()));
+        SprintEntity sprint = sprintRepository.findById(request.sprintId())
+                .orElseThrow(() -> new EntityNotFoundException("Sprint not found with id: " + request.sprintId()));
         AssignmentEntity entity = mapper.toAssignmentEntity(request, feature, team, sprint);
         entity = assignmentRepository.save(entity);
         return mapper.toAssignmentDto(entity);
@@ -90,8 +90,8 @@ public class AssignmentService {
     public AssignmentDto update(UUID id, UpdateAssignmentRequest request) {
         AssignmentEntity entity = assignmentRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Assignment not found with id: " + id));
-        if (request.getAllocatedEffort() != null) {
-            entity.setAllocatedEffort(request.getAllocatedEffort());
+        if (request.allocatedEffort() != null) {
+            entity.setAllocatedEffort(request.allocatedEffort());
         }
         entity = assignmentRepository.save(entity);
         return mapper.toAssignmentDto(entity);
@@ -127,12 +127,12 @@ public class AssignmentService {
     public List<AssignmentDto> bulkCreate(List<CreateAssignmentRequest> requests) {
         List<AssignmentEntity> entities = requests.stream()
                 .map(request -> {
-                    FeatureEntity feature = featureRepository.findById(request.getFeatureId())
-                            .orElseThrow(() -> new EntityNotFoundException("Feature not found with id: " + request.getFeatureId()));
-                    TeamEntity team = teamRepository.findById(request.getTeamId())
-                            .orElseThrow(() -> new EntityNotFoundException("Team not found with id: " + request.getTeamId()));
-                    SprintEntity sprint = sprintRepository.findById(request.getSprintId())
-                            .orElseThrow(() -> new EntityNotFoundException("Sprint not found with id: " + request.getSprintId()));
+                    FeatureEntity feature = featureRepository.findById(request.featureId())
+                            .orElseThrow(() -> new EntityNotFoundException("Feature not found with id: " + request.featureId()));
+                    TeamEntity team = teamRepository.findById(request.teamId())
+                            .orElseThrow(() -> new EntityNotFoundException("Team not found with id: " + request.teamId()));
+                    SprintEntity sprint = sprintRepository.findById(request.sprintId())
+                            .orElseThrow(() -> new EntityNotFoundException("Sprint not found with id: " + request.sprintId()));
                     return mapper.toAssignmentEntity(request, feature, team, sprint);
                 })
                 .collect(Collectors.toList());

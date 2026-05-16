@@ -50,12 +50,14 @@ class ProductServiceTest {
         productEntity.setTechnologyStack(new HashSet<>(List.of("java", "spring")));
         productEntity.setVersion(1);
 
-        productDto = new ProductDto();
-        productDto.setId(productId);
-        productDto.setName("Test Product");
-        productDto.setDescription("A test product");
-        productDto.setTechnologyStack(new HashSet<>(List.of("java", "spring")));
-        productDto.setVersion(1);
+        productDto = new ProductDto(
+            productId,
+            "Test Product",
+            "A test product",
+            new HashSet<>(List.of("java", "spring")),
+            1,
+            null, null, null, null
+        );
     }
 
     @Test
@@ -66,7 +68,7 @@ class ProductServiceTest {
         List<ProductDto> result = productService.listAll();
 
         assertThat(result).hasSize(1);
-        assertThat(result.get(0).getName()).isEqualTo("Test Product");
+        assertThat(result.get(0).name()).isEqualTo("Test Product");
     }
 
     @Test
@@ -76,7 +78,7 @@ class ProductServiceTest {
 
         ProductDto result = productService.getById(productId);
 
-        assertThat(result.getId()).isEqualTo(productId);
+        assertThat(result.id()).isEqualTo(productId);
     }
 
     @Test
@@ -90,10 +92,7 @@ class ProductServiceTest {
 
     @Test
     void create_shouldSaveAndReturnDto() {
-        CreateProductRequest request = new CreateProductRequest();
-        request.setName("New Product");
-        request.setDescription("Description");
-        request.setTechnologyStack(Set.of("java"));
+        CreateProductRequest request = new CreateProductRequest("New Product", "Description", Set.of("java"));
 
         when(mapper.toProductEntity(request)).thenReturn(productEntity);
         when(productRepository.save(productEntity)).thenReturn(productEntity);
@@ -107,8 +106,7 @@ class ProductServiceTest {
 
     @Test
     void update_shouldModifyAndReturnDto() {
-        UpdateProductRequest request = new UpdateProductRequest();
-        request.setName("Updated Name");
+        UpdateProductRequest request = new UpdateProductRequest("Updated Name", null, null);
 
         when(productRepository.findById(productId)).thenReturn(Optional.of(productEntity));
         when(productRepository.save(productEntity)).thenReturn(productEntity);
@@ -122,7 +120,7 @@ class ProductServiceTest {
 
     @Test
     void update_notFound_shouldThrow() {
-        UpdateProductRequest request = new UpdateProductRequest();
+        UpdateProductRequest request = new UpdateProductRequest("Updated Name", null, null);
         when(productRepository.findById(productId)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> productService.update(productId, request))
@@ -152,9 +150,11 @@ class ProductServiceTest {
         teamEntity.setId(UUID.randomUUID());
         teamEntity.setName("Team Alpha");
 
-        TeamDto teamDto = new TeamDto();
-        teamDto.setId(teamEntity.getId());
-        teamDto.setName("Team Alpha");
+        TeamDto teamDto = new TeamDto(
+            teamEntity.getId(),
+            "Team Alpha",
+            null, null, null, null, null, null, null, null, null, null, null
+        );
 
         when(productRepository.existsById(productId)).thenReturn(true);
         when(teamRepository.findByProductId(productId)).thenReturn(List.of(teamEntity));
@@ -163,7 +163,7 @@ class ProductServiceTest {
         List<TeamDto> result = productService.getTeams(productId);
 
         assertThat(result).hasSize(1);
-        assertThat(result.get(0).getName()).isEqualTo("Team Alpha");
+        assertThat(result.get(0).name()).isEqualTo("Team Alpha");
     }
 
     @Test

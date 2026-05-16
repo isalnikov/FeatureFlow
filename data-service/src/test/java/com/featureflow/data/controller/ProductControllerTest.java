@@ -46,7 +46,17 @@ class ProductControllerTest {
     void get_shouldReturnProduct() throws Exception {
         UUID id = UUID.randomUUID();
         ProductDto dto = productDto("Product A");
-        dto.setId(id);
+        dto = new ProductDto(
+            id,
+            dto.name(),
+            dto.description(),
+            dto.technologyStack(),
+            dto.version(),
+            dto.createdAt(),
+            dto.updatedAt(),
+            dto.createdBy(),
+            dto.updatedBy()
+        );
         when(service.getById(id)).thenReturn(dto);
 
         mockMvc.perform(get("/api/v1/products/{id}", id))
@@ -66,10 +76,7 @@ class ProductControllerTest {
 
     @Test
     void create_shouldReturn201() throws Exception {
-        CreateProductRequest request = new CreateProductRequest();
-        request.setName("New Product");
-        request.setDescription("Description");
-        request.setTechnologyStack(Set.of("java"));
+        CreateProductRequest request = new CreateProductRequest("New Product", "Description", Set.of("java"));
 
         ProductDto dto = productDto("New Product");
         when(service.create(any())).thenReturn(dto);
@@ -84,13 +91,20 @@ class ProductControllerTest {
     @Test
     void update_shouldReturn200() throws Exception {
         UUID id = UUID.randomUUID();
-        UpdateProductRequest request = new UpdateProductRequest();
-        request.setName("Updated");
-        request.setDescription("New desc");
-        request.setTechnologyStack(Set.of("spring"));
+        UpdateProductRequest request = new UpdateProductRequest("Updated", "New desc", Set.of("spring"));
 
         ProductDto dto = productDto("Updated");
-        dto.setId(id);
+        dto = new ProductDto(
+            id,
+            dto.name(),
+            dto.description(),
+            dto.technologyStack(),
+            dto.version(),
+            dto.createdAt(),
+            dto.updatedAt(),
+            dto.createdBy(),
+            dto.updatedBy()
+        );
         when(service.update(eq(id), any())).thenReturn(dto);
 
         mockMvc.perform(put("/api/v1/products/{id}", id)
@@ -103,8 +117,7 @@ class ProductControllerTest {
     @Test
     void update_notFound_shouldReturn404() throws Exception {
         UUID id = UUID.randomUUID();
-        UpdateProductRequest request = new UpdateProductRequest();
-        request.setName("Updated");
+        UpdateProductRequest request = new UpdateProductRequest("Updated", null, null);
         when(service.update(eq(id), any())).thenThrow(new jakarta.persistence.EntityNotFoundException("Not found"));
 
         mockMvc.perform(put("/api/v1/products/{id}", id)
@@ -134,9 +147,11 @@ class ProductControllerTest {
     @Test
     void getWithTeams_shouldReturnTeams() throws Exception {
         UUID id = UUID.randomUUID();
-        TeamDto teamDto = new TeamDto();
-        teamDto.setId(id);
-        teamDto.setName("Team Alpha");
+        TeamDto teamDto = new TeamDto(
+            id,
+            "Team Alpha",
+            null, null, null, null, null, null, null, null, null, null, null
+        );
         when(service.getTeams(id)).thenReturn(List.of(teamDto));
 
         mockMvc.perform(get("/api/v1/products/{id}/teams", id))
@@ -154,16 +169,16 @@ class ProductControllerTest {
     }
 
     private ProductDto productDto(String name) {
-        ProductDto dto = new ProductDto();
-        dto.setId(UUID.randomUUID());
-        dto.setName(name);
-        dto.setDescription("Desc");
-        dto.setTechnologyStack(Set.of("java"));
-        dto.setVersion(1);
-        dto.setCreatedAt(Instant.now());
-        dto.setUpdatedAt(Instant.now());
-        dto.setCreatedBy("user");
-        dto.setUpdatedBy("user");
-        return dto;
+        return new ProductDto(
+            UUID.randomUUID(),
+            name,
+            "Desc",
+            Set.of("java"),
+            1,
+            Instant.now(),
+            Instant.now(),
+            "user",
+            "user"
+        );
     }
 }

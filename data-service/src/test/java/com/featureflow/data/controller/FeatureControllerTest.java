@@ -50,8 +50,20 @@ class FeatureControllerTest {
     @Test
     void get_shouldReturnFeature() throws Exception {
         UUID id = UUID.randomUUID();
-        FeatureDto dto = featureDto("Feature A");
-        dto.setId(id);
+        FeatureDto dto = new FeatureDto(
+            id,
+            "Feature A",
+            "Desc",
+            50.0,
+            null, null,
+            ClassOfService.STANDARD,
+            null, null, null,
+            false,
+            null, null,
+            1,
+            Instant.now(), Instant.now(),
+            null, null
+        );
         when(service.getById(id)).thenReturn(dto);
 
         mockMvc.perform(get("/api/v1/features/{id}", id))
@@ -71,9 +83,9 @@ class FeatureControllerTest {
 
     @Test
     void create_shouldReturn201() throws Exception {
-        CreateFeatureRequest request = new CreateFeatureRequest();
-        request.setTitle("New Feature");
-        request.setBusinessValue(50.0);
+        CreateFeatureRequest request = new CreateFeatureRequest(
+            "New Feature", null, 50.0, null, null, null, null, null, null, null, null, null, null
+        );
 
         FeatureDto dto = featureDto("New Feature");
         when(service.create(any())).thenReturn(dto);
@@ -88,11 +100,15 @@ class FeatureControllerTest {
     @Test
     void update_shouldReturn200() throws Exception {
         UUID id = UUID.randomUUID();
-        UpdateFeatureRequest request = new UpdateFeatureRequest();
-        request.setTitle("Updated Feature");
+        UpdateFeatureRequest request = new UpdateFeatureRequest(
+            "Updated Feature", null, null, null, null, null, null, null, null
+        );
 
-        FeatureDto dto = featureDto("Updated Feature");
-        dto.setId(id);
+        FeatureDto dto = new FeatureDto(
+            id,
+            "Updated Feature",
+            null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null
+        );
         when(service.update(eq(id), any())).thenReturn(dto);
 
         mockMvc.perform(put("/api/v1/features/{id}", id)
@@ -105,8 +121,9 @@ class FeatureControllerTest {
     @Test
     void update_notFound_shouldReturn404() throws Exception {
         UUID id = UUID.randomUUID();
-        UpdateFeatureRequest request = new UpdateFeatureRequest();
-        request.setTitle("Updated");
+        UpdateFeatureRequest request = new UpdateFeatureRequest(
+            "Updated", null, null, null, null, null, null, null, null
+        );
         when(service.update(eq(id), any())).thenThrow(new jakarta.persistence.EntityNotFoundException("Not found"));
 
         mockMvc.perform(put("/api/v1/features/{id}", id)
@@ -135,9 +152,9 @@ class FeatureControllerTest {
 
     @Test
     void bulkCreate_shouldReturn201() throws Exception {
-        CreateFeatureRequest req = new CreateFeatureRequest();
-        req.setTitle("Feature 1");
-        req.setBusinessValue(50.0);
+        CreateFeatureRequest req = new CreateFeatureRequest(
+            "Feature 1", null, 50.0, null, null, null, null, null, null, null, null, null, null
+        );
 
         FeatureDto dto = featureDto("Feature 1");
         when(service.bulkCreate(any())).thenReturn(List.of(dto));
@@ -194,16 +211,19 @@ class FeatureControllerTest {
     }
 
     private FeatureDto featureDto(String title) {
-        FeatureDto dto = new FeatureDto();
-        dto.setId(UUID.randomUUID());
-        dto.setTitle(title);
-        dto.setDescription("Desc");
-        dto.setBusinessValue(50.0);
-        dto.setClassOfService(ClassOfService.STANDARD);
-        dto.setCanSplit(false);
-        dto.setVersion(1);
-        dto.setCreatedAt(Instant.now());
-        dto.setUpdatedAt(Instant.now());
-        return dto;
+        return new FeatureDto(
+            UUID.randomUUID(),
+            title,
+            "Desc",
+            50.0,
+            null, null,
+            ClassOfService.STANDARD,
+            null, null, null,
+            false,
+            null, null,
+            1,
+            Instant.now(), Instant.now(),
+            null, null
+        );
     }
 }

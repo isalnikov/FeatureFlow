@@ -67,13 +67,14 @@ class SprintServiceTest {
         sprintEntity.setCapacityOverrides(Map.of());
         sprintEntity.setExternalId("SPR-1");
 
-        sprintDto = new SprintDto();
-        sprintDto.setId(sprintId);
-        sprintDto.setPlanningWindowId(planningWindowId);
-        sprintDto.setStartDate(LocalDate.of(2025, 1, 1));
-        sprintDto.setEndDate(LocalDate.of(2025, 1, 14));
-        sprintDto.setCapacityOverrides(Map.of());
-        sprintDto.setExternalId("SPR-1");
+        sprintDto = new SprintDto(
+            sprintId,
+            planningWindowId,
+            LocalDate.of(2025, 1, 1),
+            LocalDate.of(2025, 1, 14),
+            Map.of(),
+            "SPR-1"
+        );
     }
 
     @Test
@@ -85,7 +86,7 @@ class SprintServiceTest {
         List<SprintDto> result = sprintService.listByPlanningWindow(planningWindowId);
 
         assertThat(result).hasSize(1);
-        assertThat(result.get(0).getId()).isEqualTo(sprintId);
+        assertThat(result.get(0).id()).isEqualTo(sprintId);
     }
 
     @Test
@@ -95,8 +96,8 @@ class SprintServiceTest {
 
         SprintDto result = sprintService.getById(sprintId);
 
-        assertThat(result.getId()).isEqualTo(sprintId);
-        assertThat(result.getStartDate()).isEqualTo(LocalDate.of(2025, 1, 1));
+        assertThat(result.id()).isEqualTo(sprintId);
+        assertThat(result.startDate()).isEqualTo(LocalDate.of(2025, 1, 1));
     }
 
     @Test
@@ -110,10 +111,7 @@ class SprintServiceTest {
 
     @Test
     void create_shouldSaveAndReturnDto() {
-        CreateSprintRequest request = new CreateSprintRequest();
-        request.setStartDate(LocalDate.of(2025, 2, 1));
-        request.setEndDate(LocalDate.of(2025, 2, 14));
-        request.setExternalId("SPR-2");
+        CreateSprintRequest request = new CreateSprintRequest(LocalDate.of(2025, 2, 1), LocalDate.of(2025, 2, 14), Map.of(), "SPR-2");
 
         when(planningWindowRepository.findById(planningWindowId))
             .thenReturn(Optional.of(planningWindow));
@@ -129,7 +127,7 @@ class SprintServiceTest {
 
     @Test
     void create_planningWindowNotFound_shouldThrow() {
-        CreateSprintRequest request = new CreateSprintRequest();
+        CreateSprintRequest request = new CreateSprintRequest(LocalDate.of(2025, 2, 1), LocalDate.of(2025, 2, 14), Map.of(), "SPR-2");
         when(planningWindowRepository.findById(planningWindowId)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> sprintService.create(planningWindowId, request))
@@ -139,9 +137,7 @@ class SprintServiceTest {
 
     @Test
     void update_shouldModifyAndReturnDto() {
-        UpdateSprintRequest request = new UpdateSprintRequest();
-        request.setEndDate(LocalDate.of(2025, 1, 21));
-        request.setExternalId("SPR-1-UPDATED");
+        UpdateSprintRequest request = new UpdateSprintRequest(null, LocalDate.of(2025, 1, 21), null, "SPR-1-UPDATED");
 
         when(sprintRepository.findById(sprintId)).thenReturn(Optional.of(sprintEntity));
         when(sprintRepository.save(sprintEntity)).thenReturn(sprintEntity);
@@ -156,7 +152,7 @@ class SprintServiceTest {
 
     @Test
     void update_notFound_shouldThrow() {
-        UpdateSprintRequest request = new UpdateSprintRequest();
+        UpdateSprintRequest request = new UpdateSprintRequest(null, null, null, null);
         when(sprintRepository.findById(sprintId)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> sprintService.update(sprintId, request))

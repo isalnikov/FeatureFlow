@@ -45,8 +45,16 @@ class TeamControllerTest {
     @Test
     void get_shouldReturnTeam() throws Exception {
         UUID id = UUID.randomUUID();
-        TeamDto dto = teamDto("Team Alpha");
-        dto.setId(id);
+        TeamDto dto = new TeamDto(
+            id,
+            "Team Alpha",
+            0.7, 0.2, 0.1, 50.0,
+            Set.of("java"),
+            "ext-1",
+            1,
+            Instant.now(), Instant.now(),
+            "user", "user"
+        );
         when(service.getById(id)).thenReturn(dto);
 
         mockMvc.perform(get("/api/v1/teams/{id}", id))
@@ -66,13 +74,9 @@ class TeamControllerTest {
 
     @Test
     void create_shouldReturn201() throws Exception {
-        CreateTeamRequest request = new CreateTeamRequest();
-        request.setName("New Team");
-        request.setFocusFactor(0.8);
-        request.setBugReservePercent(0.15);
-        request.setTechDebtReservePercent(0.1);
-        request.setExpertiseTags(Set.of("java"));
-        request.setExternalId("ext-1");
+        CreateTeamRequest request = new CreateTeamRequest(
+            "New Team", 0.8, 0.15, 0.1, Set.of("java"), "ext-1"
+        );
 
         TeamDto dto = teamDto("New Team");
         when(service.create(any())).thenReturn(dto);
@@ -87,14 +91,17 @@ class TeamControllerTest {
     @Test
     void update_shouldReturn200() throws Exception {
         UUID id = UUID.randomUUID();
-        UpdateTeamRequest request = new UpdateTeamRequest();
-        request.setName("Updated Team");
-        request.setFocusFactor(0.85);
-        request.setVelocity(60.0);
-        request.setExpertiseTags(Set.of("spring"));
+        UpdateTeamRequest request = new UpdateTeamRequest(
+            "Updated Team", 0.85, null, null, 60.0, Set.of("spring")
+        );
 
-        TeamDto dto = teamDto("Updated Team");
-        dto.setId(id);
+        TeamDto dto = new TeamDto(
+            id,
+            "Updated Team",
+            null, null, null, null,
+            Set.of("spring"),
+            null, null, null, null, null, null
+        );
         when(service.update(eq(id), any())).thenReturn(dto);
 
         mockMvc.perform(put("/api/v1/teams/{id}", id)
@@ -107,8 +114,7 @@ class TeamControllerTest {
     @Test
     void update_notFound_shouldReturn404() throws Exception {
         UUID id = UUID.randomUUID();
-        UpdateTeamRequest request = new UpdateTeamRequest();
-        request.setName("Updated");
+        UpdateTeamRequest request = new UpdateTeamRequest("Updated", null, null, null, null, null);
         when(service.update(eq(id), any())).thenThrow(new jakarta.persistence.EntityNotFoundException("Not found"));
 
         mockMvc.perform(put("/api/v1/teams/{id}", id)
@@ -183,20 +189,15 @@ class TeamControllerTest {
     }
 
     private TeamDto teamDto(String name) {
-        TeamDto dto = new TeamDto();
-        dto.setId(UUID.randomUUID());
-        dto.setName(name);
-        dto.setFocusFactor(0.7);
-        dto.setBugReservePercent(0.2);
-        dto.setTechDebtReservePercent(0.1);
-        dto.setVelocity(50.0);
-        dto.setExpertiseTags(Set.of("java"));
-        dto.setExternalId("ext-1");
-        dto.setVersion(1);
-        dto.setCreatedAt(Instant.now());
-        dto.setUpdatedAt(Instant.now());
-        dto.setCreatedBy("user");
-        dto.setUpdatedBy("user");
-        return dto;
+        return new TeamDto(
+            UUID.randomUUID(),
+            name,
+            0.7, 0.2, 0.1, 50.0,
+            Set.of("java"),
+            "ext-1",
+            1,
+            Instant.now(), Instant.now(),
+            "user", "user"
+        );
     }
 }

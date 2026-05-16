@@ -55,14 +55,20 @@ class FeatureServiceTest {
         featureEntity.setCanSplit(false);
         featureEntity.setVersion(1);
 
-        featureDto = new FeatureDto();
-        featureDto.setId(featureId);
-        featureDto.setTitle("Test Feature");
-        featureDto.setDescription("A test feature");
-        featureDto.setBusinessValue(50.0);
-        featureDto.setDeadline(LocalDate.of(2025, 6, 1));
-        featureDto.setCanSplit(false);
-        featureDto.setVersion(1);
+        featureDto = new FeatureDto(
+            featureId,
+            "Test Feature",
+            "A test feature",
+            50.0,
+            null,
+            LocalDate.of(2025, 6, 1),
+            null,
+            null, null, null,
+            false,
+            null, null,
+            1,
+            null, null, null, null
+        );
     }
 
     @Test
@@ -73,7 +79,7 @@ class FeatureServiceTest {
         List<FeatureDto> result = featureService.listAll();
 
         assertThat(result).hasSize(1);
-        assertThat(result.get(0).getTitle()).isEqualTo("Test Feature");
+        assertThat(result.get(0).title()).isEqualTo("Test Feature");
     }
 
     @Test
@@ -95,7 +101,7 @@ class FeatureServiceTest {
 
         FeatureDto result = featureService.getById(featureId);
 
-        assertThat(result.getId()).isEqualTo(featureId);
+        assertThat(result.id()).isEqualTo(featureId);
     }
 
     @Test
@@ -109,9 +115,9 @@ class FeatureServiceTest {
 
     @Test
     void create_shouldSaveAndReturnDto() {
-        CreateFeatureRequest request = new CreateFeatureRequest();
-        request.setTitle("New Feature");
-        request.setBusinessValue(75.0);
+        CreateFeatureRequest request = new CreateFeatureRequest(
+            "New Feature", null, 75.0, null, null, null, null, null, null, null, null, null, null
+        );
 
         when(mapper.toFeatureEntity(request)).thenReturn(featureEntity);
         when(featureRepository.save(featureEntity)).thenReturn(featureEntity);
@@ -125,15 +131,16 @@ class FeatureServiceTest {
 
     @Test
     void create_withProductIds_shouldLinkProducts() {
-        CreateFeatureRequest request = new CreateFeatureRequest();
-        request.setTitle("New Feature");
-        request.setProductIds(Set.of(UUID.randomUUID()));
+        Set<UUID> productIds = Set.of(UUID.randomUUID());
+        CreateFeatureRequest request = new CreateFeatureRequest(
+            "New Feature", null, null, null, null, null, productIds, null, null, null, null, null, null
+        );
 
         ProductEntity product = new ProductEntity();
         product.setId(UUID.randomUUID());
 
         when(mapper.toFeatureEntity(request)).thenReturn(featureEntity);
-        when(productRepository.findAllById(request.getProductIds())).thenReturn(List.of(product));
+        when(productRepository.findAllById(request.productIds())).thenReturn(List.of(product));
         when(featureRepository.save(featureEntity)).thenReturn(featureEntity);
         when(mapper.toFeatureDto(featureEntity)).thenReturn(featureDto);
 
@@ -145,9 +152,9 @@ class FeatureServiceTest {
 
     @Test
     void update_shouldModifyAndReturnDto() {
-        UpdateFeatureRequest request = new UpdateFeatureRequest();
-        request.setTitle("Updated Title");
-        request.setBusinessValue(80.0);
+        UpdateFeatureRequest request = new UpdateFeatureRequest(
+            "Updated Title", null, 80.0, null, null, null, null, null, null
+        );
 
         when(featureRepository.findById(featureId)).thenReturn(Optional.of(featureEntity));
         when(featureRepository.save(featureEntity)).thenReturn(featureEntity);
@@ -162,7 +169,7 @@ class FeatureServiceTest {
 
     @Test
     void update_notFound_shouldThrow() {
-        UpdateFeatureRequest request = new UpdateFeatureRequest();
+        UpdateFeatureRequest request = new UpdateFeatureRequest(null, null, null, null, null, null, null, null, null);
         when(featureRepository.findById(featureId)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> featureService.update(featureId, request))
@@ -188,18 +195,22 @@ class FeatureServiceTest {
 
     @Test
     void bulkCreate_shouldSaveAllAndReturnDtos() {
-        CreateFeatureRequest req1 = new CreateFeatureRequest();
-        req1.setTitle("Feature 1");
-        CreateFeatureRequest req2 = new CreateFeatureRequest();
-        req2.setTitle("Feature 2");
+        CreateFeatureRequest req1 = new CreateFeatureRequest(
+            "Feature 1", null, null, null, null, null, null, null, null, null, null, null, null
+        );
+        CreateFeatureRequest req2 = new CreateFeatureRequest(
+            "Feature 2", null, null, null, null, null, null, null, null, null, null, null, null
+        );
 
         FeatureEntity entity2 = new FeatureEntity();
         entity2.setId(UUID.randomUUID());
         entity2.setTitle("Feature 2");
 
-        FeatureDto dto2 = new FeatureDto();
-        dto2.setId(entity2.getId());
-        dto2.setTitle("Feature 2");
+        FeatureDto dto2 = new FeatureDto(
+            entity2.getId(),
+            "Feature 2",
+            null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null
+        );
 
         when(mapper.toFeatureEntity(req1)).thenReturn(featureEntity);
         when(mapper.toFeatureEntity(req2)).thenReturn(entity2);

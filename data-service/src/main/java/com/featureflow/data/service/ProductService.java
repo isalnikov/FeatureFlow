@@ -55,14 +55,14 @@ public class ProductService {
     public ProductDto update(UUID id, UpdateProductRequest request) {
         ProductEntity entity = productRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Product not found with id: " + id));
-        if (request.getName() != null) {
-            entity.setName(request.getName());
+        if (request.name() != null) {
+            entity.setName(request.name());
         }
-        if (request.getDescription() != null) {
-            entity.setDescription(request.getDescription());
+        if (request.description() != null) {
+            entity.setDescription(request.description());
         }
-        if (request.getTechnologyStack() != null) {
-            entity.setTechnologyStack(request.getTechnologyStack());
+        if (request.technologyStack() != null) {
+            entity.setTechnologyStack(request.technologyStack());
         }
         entity = productRepository.save(entity);
         return mapper.toProductDto(entity);

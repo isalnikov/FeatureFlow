@@ -52,8 +52,8 @@ public class FeatureService {
     @Transactional
     public FeatureDto create(CreateFeatureRequest request) {
         FeatureEntity entity = mapper.toFeatureEntity(request);
-        if (request.getProductIds() != null && !request.getProductIds().isEmpty()) {
-            Set<ProductEntity> products = new HashSet<>(productRepository.findAllById(request.getProductIds()));
+        if (request.productIds() != null && !request.productIds().isEmpty()) {
+            Set<ProductEntity> products = new HashSet<>(productRepository.findAllById(request.productIds()));
             entity.setProducts(products);
         }
         entity = featureRepository.save(entity);
@@ -64,32 +64,32 @@ public class FeatureService {
     public FeatureDto update(UUID id, UpdateFeatureRequest request) {
         FeatureEntity entity = featureRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Feature not found with id: " + id));
-        if (request.getTitle() != null) {
-            entity.setTitle(request.getTitle());
+        if (request.title() != null) {
+            entity.setTitle(request.title());
         }
-        if (request.getDescription() != null) {
-            entity.setDescription(request.getDescription());
+        if (request.description() != null) {
+            entity.setDescription(request.description());
         }
-        if (request.getBusinessValue() != null) {
-            entity.setBusinessValue(request.getBusinessValue());
+        if (request.businessValue() != null) {
+            entity.setBusinessValue(request.businessValue());
         }
-        if (request.getDeadline() != null) {
-            entity.setDeadline(request.getDeadline());
+        if (request.deadline() != null) {
+            entity.setDeadline(request.deadline());
         }
-        if (request.getClassOfService() != null) {
-            entity.setClassOfService(request.getClassOfService());
+        if (request.classOfService() != null) {
+            entity.setClassOfService(request.classOfService());
         }
-        if (request.getEffortEstimate() != null) {
-            entity.setEffortEstimate(request.getEffortEstimate());
+        if (request.effortEstimate() != null) {
+            entity.setEffortEstimate(request.effortEstimate());
         }
-        if (request.getStochasticEstimate() != null) {
-            entity.setStochasticEstimate(request.getStochasticEstimate());
+        if (request.stochasticEstimate() != null) {
+            entity.setStochasticEstimate(request.stochasticEstimate());
         }
-        if (request.getRequiredExpertise() != null) {
-            entity.setRequiredExpertise(request.getRequiredExpertise());
+        if (request.requiredExpertise() != null) {
+            entity.setRequiredExpertise(request.requiredExpertise());
         }
-        if (request.getCanSplit() != null) {
-            entity.setCanSplit(request.getCanSplit());
+        if (request.canSplit() != null) {
+            entity.setCanSplit(request.canSplit());
         }
         entity = featureRepository.save(entity);
         return mapper.toFeatureDto(entity);
