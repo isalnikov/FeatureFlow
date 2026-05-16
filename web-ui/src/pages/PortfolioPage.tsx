@@ -13,15 +13,41 @@ const statusColors: Record<string, 'success' | 'warning' | 'error' | 'default'> 
 export function PortfolioPage() {
   const [timeline, setTimeline] = useState<TimelineEntry[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [filter, setFilter] = useState<string>('all');
 
   useEffect(() => {
     dashboardApi
       .getTimeline()
       .then(setTimeline)
-      .catch(() => {})
+      .catch((err) => {
+        const message = err instanceof Error ? err.message : 'Failed to load portfolio';
+        setError(message);
+      })
       .finally(() => setLoading(false));
   }, []);
+
+  if (error) {
+    return (
+      <div>
+        <h1 className="text-2xl font-bold text-gray-900 mb-6">Portfolio Overview</h1>
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-red-700">
+          <p className="font-medium">Failed to load portfolio data</p>
+          <p className="text-sm mt-1">{error}</p>
+          <button
+            onClick={() => {
+              setError(null);
+              setLoading(true);
+              dashboardApi.getTimeline().then(setTimeline).catch((err) => setError(err.message)).finally(() => setLoading(false));
+            }}
+            className="mt-3 text-sm font-medium text-red-600 hover:text-red-800 underline"
+          >
+            Retry
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   const filtered = filter === 'all' ? timeline : timeline.filter((t) => t.status === filter);
 

@@ -5,6 +5,7 @@ import { setSelectedFeature, setShowCreateFeatureModal } from '../store/uiSlice'
 import { useFeatures } from '../hooks/useFeatures';
 import { useAssignments } from '../hooks/usePlanning';
 import { runPlanning } from '../store/planningSlice';
+import { assignmentsApi } from '../api/assignments';
 import { GanttChart } from '../components/gantt/GanttChart';
 import { PlanningControls } from '../components/planning/PlanningControls';
 import { TeamLoadChart } from '../components/planning/TeamLoadChart';
@@ -20,15 +21,29 @@ export function PlanPage() {
   const planningState = useSelector((state: RootState) => state.planning);
 
   const { data: features, loading: featuresLoading } = useFeatures();
-  const { data: assignments, loading: assignmentsLoading } = useAssignments();
+  const { data: assignments, loading: assignmentsLoading, refetch: refetchAssignments } = useAssignments();
 
   const [showCreateModal, setShowModal] = useState(false);
+  const [dragError, setDragError] = useState<string | null>(null);
 
   const featureList = features?.content || [];
   const featureIds = featureList.map((f) => f.id);
 
-  const handleDragEnd = (featureId: string, newSprintId: string) => {
-    console.log('Drag end:', featureId, '→', newSprintId);
+  const handleDragEnd = async (featureId: string, newSprintId: string) => {
+    setDragError(null);
+    const featureAssignment = assignments?.find((a) => a.featureId === featureId);
+    if (!featureAssignment) {
+      setDragError('No assignment found for this feature');
+      return;
+    }
+    try {
+      await assignmentsApi.update(featureAssignment.id, {
+        sprintId: newSprintId,
+      });
+      refetchAssignments();
+    } catch (err) {
+      setDragError(err instanceof Error ? err.message : 'Failed to update assignment');
+    }
   };
 
   const handleRunPlanning = () => {
@@ -57,6 +72,10 @@ export function PlanPage() {
     );
   };
 
+  const handlePlanningComplete = () => {
+    refetchAssignments();
+  };
+
   const selectedFeature = featureList.find((f) => f.id === selectedFeatureId);
 
   if (featuresLoading || assignmentsLoading) {
@@ -65,12 +84,22 @@ export function PlanPage() {
 
   return (
     <div className="h-full flex flex-col">
-      <div className="mb-4">
+      <div className="mb-4 space-y-2">
         <PlanningControls
           featureIds={featureIds}
           planningWindowId="current"
-          onPlanningComplete={(result) => console.log('Planning complete', result)}
+          onPlanningComplete={handlePlanningComplete}
         />
+        {dragError && (
+          <div className="bg-red-50 border border-red-200 rounded-md p-3 text-sm text-red-700">
+            {dragError}
+          </div>
+        )}
+        {planningState.error && (
+          <div className="bg-red-50 border border-red-200 rounded-md p-3 text-sm text-red-700">
+            {planningState.error}
+          </div>
+        )}
       </div>
 
       <div className="flex-1 flex gap-4 min-h-0">

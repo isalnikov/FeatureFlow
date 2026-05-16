@@ -1,4 +1,5 @@
 import { useState, DragEvent } from 'react';
+import { addDays, format } from 'date-fns';
 import type { Feature, Assignment, FeatureTimeline } from '../../types';
 import clsx from 'clsx';
 
@@ -35,6 +36,7 @@ export function GanttBar({
   assignments,
   isDragged,
   onDragStart,
+  onDragEnd,
   onClick,
   dayWidth,
   totalDays,
@@ -78,8 +80,11 @@ export function GanttBar({
     e.dataTransfer.setData('featureId', feature.id);
   };
 
-  const handleDragEnd = () => {
+  const handleDragEnd = (e: DragEvent) => {
     setIsDragging(false);
+    const dropX = e.clientX;
+    const dropDate = addDays(startDate, Math.floor((dropX - 256) / dayWidth));
+    onDragEnd(format(dropDate, 'yyyy-MM-dd'));
   };
 
   return (

@@ -68,7 +68,7 @@ public class GreedyPlanner {
         }
 
         Map<UUID, TeamLoadReport> teamLoadReports = computeTeamLoadReports(assignments, request);
-        double totalCost = computeCost(assignments, timelines, request.parameters());
+        double totalCost = computeCost(assignments, timelines, request.parameters(), request);
 
         long elapsed = System.currentTimeMillis() - start;
 
@@ -251,31 +251,169 @@ public class GreedyPlanner {
         PlanningRequest request
     ) {
         Map<UUID, TeamLoadReport> reports = new LinkedHashMap<>();
+
         for (Team team : request.teams()) {
+            List<Assignment> teamAssignments = assignments.stream()
+                .filter(a -> a.getTeamId().equals(team.getId()))
+                .toList();
+
+            Map<LocalDate, Map<Role, Double>> loadByDateAndRole = new LinkedHashMap<>();
+
+            for (Sprint sprint : request.planningWindow().getSprints()) {
+                List<Assignment> sprintAssignments = teamAssignments.stream()
+                    .filter(a -> a.getSprintId().equals(sprint.id()))
+                    .toList();
+
+                if (sprintAssignments.isEmpty()) continue;
+
+                Map<Role, Double> roleLoad = new EnumMap<>(Role.class);
+                for (Role role : Role.values()) {
+                    double total = sprintAssignments.stream()
+                        .mapToDouble(a -> a.getAllocatedEffort().forRole(role))
+                        .sum();
+                    roleLoad.put(role, total);
+                }
+                loadByDateAndRole.put(sprint.startDate(), roleLoad);
+            }
+
+            double utilization = computeUtilization(teamAssignments, team, request);
+            List<String> bottlenecks = findBottleneckRoles(teamAssignments, team);
+
             reports.put(team.getId(), new TeamLoadReport(
                 team.getId(),
-                Map.of(),
-                0.0,
-                List.of()
+                loadByDateAndRole,
+                utilization,
+                bottlenecks
             ));
         }
+
         return reports;
+    }
+
+    private double computeUtilization(
+        List<Assignment> teamAssignments,
+        Team team,
+        PlanningRequest request
+    ) {
+        double totalAllocated = 0.0;
+        double totalAvailable = 0.0;
+
+        for (Sprint sprint : request.planningWindow().getSprints()) {
+            Capacity effective = team.effectiveCapacityForSprint(sprint);
+            for (Role role : Role.values()) {
+                totalAvailable += effective.effectiveHours(role);
+            }
+
+            for (Assignment assignment : teamAssignments) {
+                if (assignment.getSprintId().equals(sprint.id())) {
+                    totalAllocated += assignment.getAllocatedEffort().totalHours();
+                }
+            }
+        }
+
+        return totalAvailable > 0 ? (totalAllocated / totalAvailable) * 100.0 : 0.0;
+    }
+
+    private List<String> findBottleneckRoles(
+        List<Assignment> teamAssignments,
+        Team team
+    ) {
+        List<String> bottlenecks = new ArrayList<>();
+
+        Map<Role, Double> totalLoadByRole = new EnumMap<>(Role.class);
+        for (Assignment assignment : teamAssignments) {
+            for (Role role : Role.values()) {
+                totalLoadByRole.merge(role, assignment.getAllocatedEffort().forRole(role), Double::sum);
+            }
+        }
+
+        Capacity capacity = team.getDefaultCapacity();
+        for (Role role : Role.values()) {
+            double available = capacity.effectiveHours(role);
+            double load = totalLoadByRole.getOrDefault(role, 0.0);
+            if (available > 0 && load > available * 0.9) {
+                bottlenecks.add(role.name());
+            }
+        }
+
+        return bottlenecks;
     }
 
     private double computeCost(
         List<Assignment> assignments,
         Map<UUID, FeatureTimeline> timelines,
-        PlanningParameters params
+        PlanningParameters params,
+        PlanningRequest request
     ) {
-        double cost = 0;
+        Map<UUID, FeatureRequest> featureMap = new HashMap<>();
+        for (FeatureRequest f : request.features()) {
+            featureMap.put(f.getId(), f);
+        }
+
+        double ttmCost = computeTtmCost(timelines, featureMap);
+        double underutilCost = computeUnderutilizationCost(assignments, request);
+        double deadlineCost = computeDeadlinePenalty(timelines, featureMap);
+
+        return params.w1Ttm() * ttmCost
+             + params.w2Underutilization() * underutilCost
+             + params.w3DeadlinePenalty() * deadlineCost;
+    }
+
+    private double computeTtmCost(
+        Map<UUID, FeatureTimeline> timelines,
+        Map<UUID, FeatureRequest> featureMap
+    ) {
+        double total = 0.0;
         for (var entry : timelines.entrySet()) {
             FeatureTimeline tl = entry.getValue();
-            long daysFromStart = java.time.temporal.ChronoUnit.DAYS.between(
-                tl.startDate(), tl.endDate()
-            );
-            cost += daysFromStart;
+            FeatureRequest feature = featureMap.get(entry.getKey());
+            double value = feature != null ? feature.getBusinessValue() : 1.0;
+            long daysFromStart = java.time.temporal.ChronoUnit.DAYS.between(tl.startDate(), tl.endDate());
+            total += value * Math.max(0, daysFromStart);
         }
-        return cost;
+        return total;
+    }
+
+    private double computeUnderutilizationCost(
+        List<Assignment> assignments,
+        PlanningRequest request
+    ) {
+        double total = 0.0;
+
+        for (Team team : request.teams()) {
+            for (Sprint sprint : request.planningWindow().getSprints()) {
+                double available = team.effectiveCapacityForSprint(sprint).totalEffectiveHours();
+                double allocated = assignments.stream()
+                    .filter(a -> a.getTeamId().equals(team.getId()) && a.getSprintId().equals(sprint.id()))
+                    .mapToDouble(a -> a.getAllocatedEffort().totalHours())
+                    .sum();
+
+                double utilizationPct = available > 0 ? (allocated / available) * 100.0 : 0.0;
+                total += Math.pow(100.0 - Math.min(utilizationPct, 100.0), 2);
+            }
+        }
+
+        return total;
+    }
+
+    private double computeDeadlinePenalty(
+        Map<UUID, FeatureTimeline> timelines,
+        Map<UUID, FeatureRequest> featureMap
+    ) {
+        double penalty = 0.0;
+        for (var entry : timelines.entrySet()) {
+            FeatureRequest feature = featureMap.get(entry.getKey());
+            if (feature != null && feature.hasDeadline()) {
+                FeatureTimeline tl = entry.getValue();
+                if (tl.endDate().isAfter(feature.getDeadline())) {
+                    long daysLate = java.time.temporal.ChronoUnit.DAYS.between(
+                        feature.getDeadline(), tl.endDate()
+                    );
+                    penalty += feature.getBusinessValue() * daysLate;
+                }
+            }
+        }
+        return penalty;
     }
 
     private UUID capacityKey(UUID teamId, UUID sprintId) {

@@ -60,7 +60,7 @@ public class PlanningOrchestrator {
             request.features(),
             baseDates,
             request.parameters().monteCarlo(),
-            new Random(42)
+            new Random()
         );
 
         PlanningResult finalResult = mergeResults(greedyResult, optimizedSolution, probabilities);
@@ -76,6 +76,41 @@ public class PlanningOrchestrator {
             elapsed,
             PlanningResult.PlanningAlgorithm.SIMULATED_ANNEALING
         );
+    }
+
+    public List<String> validate(PlanningRequest request) {
+        List<String> violations = new ArrayList<>();
+
+        if (request.features().isEmpty()) {
+            violations.add("No features in planning request");
+        }
+
+        if (request.teams().isEmpty()) {
+            violations.add("No teams in planning request");
+        }
+
+        for (FeatureRequest feature : request.features()) {
+            if (feature.getEffortEstimate().totalHours() <= 0) {
+                violations.add("Feature '%s' has zero or negative effort estimate".formatted(feature.getTitle()));
+            }
+
+            for (UUID depId : feature.getDependencies()) {
+                boolean exists = request.features().stream()
+                    .anyMatch(f -> f.getId().equals(depId));
+                if (!exists) {
+                    violations.add("Feature '%s' depends on non-existent feature %s".formatted(
+                        feature.getTitle(), depId));
+                }
+            }
+        }
+
+        for (Team team : request.teams()) {
+            if (team.getMembers().isEmpty()) {
+                violations.add("Team '%s' has no members".formatted(team.getName()));
+            }
+        }
+
+        return violations;
     }
 
     private PlanningResult mergeResults(

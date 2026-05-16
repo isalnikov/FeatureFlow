@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { planningApi } from '../../api/planning';
 import { useSSE } from '../../hooks/useSSE';
 import type { PlanningParameters, PlanningRunRequest } from '../../types';
@@ -34,7 +34,7 @@ export function PlanningControls({ featureIds, planningWindowId, onPlanningCompl
 
   const { status } = useSSE(jobId ? `/planning/jobs/${jobId}/sse` : null);
 
-  useState(() => {
+  useEffect(() => {
     if (status) {
       setProgress(status.progressPercent || 0);
       setPhase(status.phase || null);
@@ -44,7 +44,7 @@ export function PlanningControls({ featureIds, planningWindowId, onPlanningCompl
         onPlanningComplete(status);
       }
     }
-  });
+  }, [status, onPlanningComplete]);
 
   const handleRunPlanning = async () => {
     setIsPlanning(true);

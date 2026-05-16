@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { integrationsApi } from '../api/integrations';
 import { Button } from '../components/common/Button';
 
 export function SettingsPage() {
@@ -26,12 +27,45 @@ export function SettingsPage() {
     adoToken: '',
   });
 
+  const [saveStatus, setSaveStatus] = useState<string | null>(null);
+  const [testStatus, setTestStatus] = useState<Record<string, string>>({});
+  const [testing, setTesting] = useState<Record<string, boolean>>({});
+
   const handleSavePlanning = () => {
-    console.log('Saving planning params:', planningParams);
+    localStorage.setItem('featureflow_planning_params', JSON.stringify(planningParams));
+    setSaveStatus('Planning parameters saved successfully');
+    setTimeout(() => setSaveStatus(null), 3000);
   };
 
-  const handleTestConnection = (type: 'jira' | 'ado') => {
-    console.log('Testing connection:', type);
+  const handleTestConnection = async (type: 'jira' | 'ado') => {
+    setTesting((prev) => ({ ...prev, [type]: true }));
+    setTestStatus((prev) => ({ ...prev, [type]: '' }));
+
+    try {
+      if (type === 'jira') {
+        await integrationsApi.testConnection('jira', {
+          baseUrl: integrationConfig.jiraUrl,
+          authType: 'basic',
+          username: integrationConfig.jiraUsername,
+          apiToken: integrationConfig.jiraToken,
+        });
+        setTestStatus((prev) => ({ ...prev, [type]: 'Connection successful' }));
+      } else {
+        await integrationsApi.testConnection('ado', {
+          baseUrl: integrationConfig.adoUrl,
+          authType: 'token',
+          apiToken: integrationConfig.adoToken,
+        });
+        setTestStatus((prev) => ({ ...prev, [type]: 'Connection successful' }));
+      }
+    } catch (err) {
+      setTestStatus((prev) => ({
+        ...prev,
+        [type]: err instanceof Error ? err.message : 'Connection failed',
+      }));
+    } finally {
+      setTesting((prev) => ({ ...prev, [type]: false }));
+    }
   };
 
   return (
@@ -119,8 +153,9 @@ export function SettingsPage() {
               />
             </div>
           </div>
-          <div className="mt-4">
+          <div className="mt-4 flex items-center gap-3">
             <Button onClick={handleSavePlanning}>Save Planning Parameters</Button>
+            {saveStatus && <span className="text-sm text-green-600">{saveStatus}</span>}
           </div>
         </div>
 
@@ -188,9 +223,21 @@ export function SettingsPage() {
                   onChange={(e) => setIntegrationConfig((c) => ({ ...c, jiraToken: e.target.value }))}
                   className="px-3 py-2 border border-gray-300 rounded-md text-sm"
                 />
-                <Button variant="secondary" size="sm" onClick={() => handleTestConnection('jira')}>
-                  Test Connection
-                </Button>
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    onClick={() => handleTestConnection('jira')}
+                    loading={testing.jira}
+                  >
+                    Test Connection
+                  </Button>
+                  {testStatus.jira && (
+                    <span className={`text-xs ${testStatus.jira.includes('successful') ? 'text-green-600' : 'text-red-600'}`}>
+                      {testStatus.jira}
+                    </span>
+                  )}
+                </div>
               </div>
             </div>
 
@@ -211,9 +258,21 @@ export function SettingsPage() {
                   onChange={(e) => setIntegrationConfig((c) => ({ ...c, adoToken: e.target.value }))}
                   className="px-3 py-2 border border-gray-300 rounded-md text-sm"
                 />
-                <Button variant="secondary" size="sm" onClick={() => handleTestConnection('ado')}>
-                  Test Connection
-                </Button>
+                <div className="flex items-center gap-2 col-span-2">
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    onClick={() => handleTestConnection('ado')}
+                    loading={testing.ado}
+                  >
+                    Test Connection
+                  </Button>
+                  {testStatus.ado && (
+                    <span className={`text-xs ${testStatus.ado.includes('successful') ? 'text-green-600' : 'text-red-600'}`}>
+                      {testStatus.ado}
+                    </span>
+                  )}
+                </div>
               </div>
             </div>
           </div>

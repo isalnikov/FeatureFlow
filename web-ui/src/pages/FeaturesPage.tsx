@@ -1,32 +1,61 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useFeatures } from '../hooks/useFeatures';
+import { featuresApi } from '../api/features';
+import { productsApi } from '../api/products';
+import { teamsApi } from '../api/teams';
 import { FeatureList } from '../components/features/FeatureList';
 import { FeatureDetail } from '../components/features/FeatureDetail';
 import { FeatureForm } from '../components/features/FeatureForm';
 import { DependencyGraph } from '../components/features/DependencyGraph';
 import { Modal } from '../components/common/Modal';
 import { Loading } from '../components/common/Loading';
-import type { Feature, CreateFeatureRequest } from '../types';
+import type { Feature, CreateFeatureRequest, Product, Team } from '../types';
 
 export function FeaturesPage() {
   const { data, loading, error, refetch } = useFeatures({ size: 100 });
   const [selectedFeature, setSelectedFeature] = useState<Feature | null>(null);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
+  const [products, setProducts] = useState<Product[]>([]);
+  const [teams, setTeams] = useState<Team[]>([]);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
   const featureList = data?.content || [];
 
+  useEffect(() => {
+    productsApi.list().then(setProducts).catch(() => setProducts([]));
+    teamsApi.list().then(setTeams).catch(() => setTeams([]));
+  }, []);
+
   const handleCreate = async (formData: CreateFeatureRequest) => {
-    console.log('Creating feature:', formData);
-    setShowCreateModal(false);
-    refetch();
+    setIsSubmitting(true);
+    setSubmitError(null);
+    try {
+      await featuresApi.create(formData);
+      setShowCreateModal(false);
+      refetch();
+    } catch (err) {
+      setSubmitError(err instanceof Error ? err.message : 'Failed to create feature');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleUpdate = async (formData: CreateFeatureRequest) => {
-    console.log('Updating feature:', selectedFeature?.id, formData);
-    setShowEditModal(false);
-    setSelectedFeature(null);
-    refetch();
+    if (!selectedFeature) return;
+    setIsSubmitting(true);
+    setSubmitError(null);
+    try {
+      await featuresApi.update(selectedFeature.id, formData);
+      setShowEditModal(false);
+      setSelectedFeature(null);
+      refetch();
+    } catch (err) {
+      setSubmitError(err instanceof Error ? err.message : 'Failed to update feature');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   if (loading) return <Loading fullScreen label="Loading features..." />;
@@ -62,31 +91,55 @@ export function FeaturesPage() {
 
       <Modal
         isOpen={showCreateModal}
-        onClose={() => setShowCreateModal(false)}
+        onClose={() => {
+          setShowCreateModal(false);
+          setSubmitError(null);
+        }}
         title="Create Feature"
         size="lg"
       >
+        {submitError && (
+          <div className="mb-4 bg-red-50 border border-red-200 rounded-md p-3 text-sm text-red-700">
+            {submitError}
+          </div>
+        )}
         <FeatureForm
-          products={[]}
-          teams={[]}
+          products={products}
+          teams={teams}
           onSubmit={handleCreate}
-          onCancel={() => setShowCreateModal(false)}
+          onCancel={() => {
+            setShowCreateModal(false);
+            setSubmitError(null);
+          }}
+          loading={isSubmitting}
         />
       </Modal>
 
       <Modal
         isOpen={showEditModal}
-        onClose={() => setShowEditModal(false)}
+        onClose={() => {
+          setShowEditModal(false);
+          setSubmitError(null);
+        }}
         title="Edit Feature"
         size="lg"
       >
+        {submitError && (
+          <div className="mb-4 bg-red-50 border border-red-200 rounded-md p-3 text-sm text-red-700">
+            {submitError}
+          </div>
+        )}
         {selectedFeature && (
           <FeatureForm
             feature={selectedFeature}
-            products={[]}
-            teams={[]}
+            products={products}
+            teams={teams}
             onSubmit={handleUpdate}
-            onCancel={() => setShowEditModal(false)}
+            onCancel={() => {
+              setShowEditModal(false);
+              setSubmitError(null);
+            }}
+            loading={isSubmitting}
           />
         )}
       </Modal>

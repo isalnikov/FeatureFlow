@@ -1,4 +1,5 @@
-import type { EffortEstimate, Role } from './index';
+import type { EffortEstimate } from './feature';
+import type { Assignment } from './assignment';
 
 export type PlanningPhase = 'GREEDY' | 'ANNEALING' | 'MONTE_CARLO' | 'DONE' | 'FAILED';
 

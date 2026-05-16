@@ -87,7 +87,12 @@ export function GanttChart({
     e.preventDefault();
     const featureId = e.dataTransfer.getData('featureId');
     if (featureId) {
-      onDragEnd(featureId, 'dropped-sprint');
+      const rect = e.currentTarget.getBoundingClientRect();
+      const dropX = e.clientX - rect.left + e.currentTarget.scrollLeft;
+      const dayOffset = Math.floor((dropX - 256) / dayWidth);
+      const dropDate = addDays(startDate, Math.max(0, dayOffset));
+      const sprintId = format(dropDate, 'yyyy-MM-dd');
+      onDragEnd(featureId, sprintId);
     }
     setDraggedFeature(null);
   };
