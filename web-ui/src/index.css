@@ -1,0 +1,59 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply antialiased text-gray-900 bg-gray-50;
+  }
+}
+
+@layer components {
+  .gantt-container {
+    @apply flex flex-col h-full;
+  }
+
+  .gantt-body {
+    @apply flex-1 overflow-auto relative;
+  }
+
+  .planning-controls {
+    @apply flex items-center gap-4;
+  }
+
+  .planning-progress {
+    @apply flex items-center gap-3 flex-1;
+  }
+
+  .progress-bar {
+    @apply bg-brand-600 h-2 rounded-full transition-all duration-300;
+  }
+
+  .progress-label {
+    @apply text-sm text-gray-600 whitespace-nowrap;
+  }
+
+  .conflict-list {
+    @apply space-y-2;
+  }
+
+  .conflict-list--empty {
+    @apply flex items-center justify-center py-8 text-green-600;
+  }
+
+  .conflict-item {
+    @apply flex items-start gap-3 p-3 rounded-md bg-gray-50 border border-gray-100;
+  }
+
+  .severity-error {
+    @apply border-l-4 border-l-red-500;
+  }
+
+  .severity-warning {
+    @apply border-l-4 border-l-amber-500;
+  }
+
+  .severity-info {
+    @apply border-l-4 border-l-blue-500;
+  }
+}
