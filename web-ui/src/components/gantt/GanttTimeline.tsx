@@ -1,14 +1,35 @@
 import { format, eachDayOfInterval } from 'date-fns';
 import { GanttZoomLevel } from '../../store/uiSlice';
 
+interface Sprint {
+  id: string;
+  startDate: string;
+  endDate: string;
+  label: string;
+}
+
 interface GanttTimelineProps {
   startDate: Date;
   endDate: Date;
   zoom: GanttZoomLevel;
+  sprints?: Sprint[];
 }
 
-export function GanttTimeline({ startDate, endDate, zoom }: GanttTimelineProps) {
+export function GanttTimeline({ startDate, endDate, zoom, sprints }: GanttTimelineProps) {
   const days = eachDayOfInterval({ start: startDate, end: endDate });
+
+  const getSprintLabel = (date: Date): string => {
+    if (!sprints || sprints.length === 0) {
+      return `S${Math.ceil((date.getDate()) / 14)}`;
+    }
+
+    const dateStr = date.toISOString().split('T')[0];
+    const matchingSprint = sprints.find((s) => {
+      return dateStr >= s.startDate && dateStr <= s.endDate;
+    });
+
+    return matchingSprint ? matchingSprint.label : '';
+  };
 
   const getHeaderLabel = (date: Date) => {
     switch (zoom) {
@@ -17,7 +38,7 @@ export function GanttTimeline({ startDate, endDate, zoom }: GanttTimelineProps) 
       case 'week':
         return format(date, 'ww');
       case 'sprint':
-        return `S${Math.ceil((date.getDate()) / 14)}`;
+        return getSprintLabel(date);
       case 'month':
         return format(date, 'MMM');
       default:
